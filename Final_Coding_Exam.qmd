@@ -1,0 +1,84 @@
+---
+title: "Final_Coding_Exam"
+author: "Milo Coolman"
+format:
+  html:
+    embed-resources: true
+---
+
+All work presented is my own and I have followed all rules for collaboration. I have not used any AI for this assignment.
+- Milo Coolman
+
+# Question 1
+```{r}
+library(tidyverse)
+module_df <- read_csv("https://raw.githubusercontent.com/highamm/ds234_quarto/main/data_online/module.csv")
+module_df
+
+module_df |> pivot_longer(col = c(2:13), names_to = "temp", values_to = "Points") |>
+  separate(col = temp, into = c("Module_Number", "Module_Type"), sep = ":") |>
+  select("student_id", "Module_Type", "Points") |>
+  mutate(Points = case_when(is.na(Points) ~ 15,
+                            !is.na(Points) ~ Points)) |>
+  group_by(student_id, Module_Type) |>
+  summarise(Module_Total = sum(Points)) |>
+  pivot_wider(names_from = Module_Type, values_from = Module_Total)
+```
+
+# Question 2
+```{r}
+library(openintro)
+library(ggrepel)
+library(ggthemes)
+arbuthnot_q2 <- arbuthnot |> pivot_longer(col = c(2:3), names_to = "sex", values_to = "christenings") |> mutate(sex = as.factor(sex)) |>
+  mutate(test = case_when(sex == "boys" ~ 1,
+                          sex == "girls" ~ 2)) |>
+  mutate(sex = fct_reorder(sex, desc(test)))
+
+arbuthnot_q2.1 <- arbuthnot_q2 |> filter(year == max(year))
+
+
+ggplot(data = arbuthnot_q2, aes(x = year, y = christenings)) +
+  geom_line(aes(group = sex, colour = sex))
+
+ggplot(data = arbuthnot_q2, aes(x = year, y = christenings)) +
+  geom_line(aes(group = sex)) +
+  geom_label_repel(data = arbuthnot_q2.1, aes(label = sex))
+```
+
+
+
+
+# Question 3
+```{r}
+set.seed(524141241)
+stat234_df <- tibble::tibble(student_id = paste0("student_",
+                                                 letters),
+                             grade_234 = runif(26, 60, 100))
+stat234_df
+
+set.seed(4141231)
+stat213_df1 <- tibble::tibble(student_id = paste0("student_", c("b", "AA",
+                                             "BB", "d", "f",
+                                             "CC", "k", "l",
+                                             "m", "n", "DD",
+                                             "EE")),
+                              grade_213 = runif(12, 60, 100))
+
+stat213_df2 <- tibble::tibble(student_id = paste0("student_", c("p", "q",
+                                             "FF", "GG", "HH",
+                                             "s", "x", "y",
+                                             "II", "JJ", "KK")),
+                              grade_213 = runif(11, 60, 100))
+
+stat213_df1
+stat213_df2
+
+stat213_df <- full_join(stat213_df1, stat213_df2)
+
+stat234_q3 <- inner_join(stat234_df, stat213_df, join_by(student_id))
+
+ggplot(data = stat234_q3, aes(y = grade_234)) +
+  geom_boxplot()
+```
+

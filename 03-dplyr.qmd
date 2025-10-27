@@ -1,0 +1,372 @@
+---
+title: "03-dplyr"
+author: "Milo Coolman"
+format:
+  html:
+    embed-resources: true
+---
+
+## 3.1.1
+```{r}
+library(babynames)
+library(tidyverse)
+
+babynames |> filter(name == "Matthew")
+babynames |> filter(year >= 2000)
+babynames |> filter(sex != "M")
+babynames |> filter(prop > 0.05)
+babynames |> filter(year == max(year))
+babynames |> filter(n > 20000 | prop > 0.05)
+babynames |> filter(sex == "F" & name == "Mary")
+babynames |> filter(sex == "F" & name == "Mary" & prop > 0.05)
+
+babynames |> slice(1:5)
+```
+
+# Exercise 1 - 4
+```{r}
+babynames |> filter(name == "Milo")
+
+babynames |> filter(year >= 2000)
+
+babynames |> filter(name == "Milo" & year >= 2000)
+
+babynames |> slice(1:20)
+```
+
+# 3.1.2
+```{r}
+babynames |> arrange(n)
+babynames |> arrange(desc(n))
+```
+
+# Exercises 5 - 6
+6) It seems to organize the names into alphabetical order with a secondary method of organization being year
+```{r}
+babynames |> arrange(desc(prop))
+
+babynames |> arrange(name)
+```
+
+# 3.1.3
+```{r}
+babynames |> select(name, n)
+babynames |> select(-sex, -prop)
+babynames |> select(name,, everything())
+```
+
+# Exercise 7
+```{r}
+babynames |> select(year, name, prop)
+babynames |> select(-sex, -n)
+```
+
+# 3.1.4
+```{r}
+babynames |> filter(name == "Matthew")
+babynames_matthew <- babynames |> filter(name == "Matthew")
+```
+
+# Exercise 8
+```{r}
+babynames_milo <- babynames |> filter(name == "Milo")
+babynames_milo
+```
+
+# 3.1.5
+```{r}
+fitness_df <- read_csv("https://raw.githubusercontent.com/highamm/ds234_quarto/main/data_online/higham_fitness_clean.csv",
+                       col_types = list(stepgoal = col_factor()))
+fitness_df
+
+fitness_df |> filter(weekday == "Sat" | weekday == "Sun") |>
+  arrange(desc(steps))
+
+fitness_df |> filter(weekday == "Sat" | weekday == "Sun")
+
+filter(fitness_df, weekday == "Sat" | weekday == "Sun")
+
+filter(fitness_df, weekday == "Sat" | weekday == "Sun") |> arrange(desc(steps))
+
+arrange(filter(fitness_df, weekday == "Sat" | weekday == "Sun"), desc(steps))
+```
+
+# Exercise 9
+```{r}
+fitness_df |> filter(active_cals > 50)
+```
+
+## 3.2
+# Class Exercises 1-4
+```{r}
+babynames |> filter(year == 2017, sex == "M") |> arrange(desc(n)) |> slice(1:10)
+
+top_10_male_2017 <- babynames |> filter(year == 2017, sex == "M") |> arrange(desc(n)) |> slice(1:10)
+ggplot(data = top_10_male_2017, aes(x = name, y = n)) +
+  geom_col(colour = "black", fill = "navyblue")
+
+
+
+babynames |> filter(name == "Milo" & sex == "M")
+
+milo_and_women <- babynames |> filter(name == "Milo" & sex == "M")
+ggplot(data = milo_and_women, aes(x = year, y = n)) +
+  geom_line()
+```
+
+# Class Exercise 5
+When piping with data frames, the first argument of the function that we use must be for a data frame (not a vector like it is for 'mean()', and not a formula like it is for 'lm()')
+
+
+# Your Turn 1-2
+```{r}
+babynames |> filter(year != 1945)
+babynames |> filter(n >= 400 & n <= 5000)
+monica_hilary <- babynames |> filter(sex == "F" & (name == "Monica" | name == "Hilary"))
+
+ggplot(data = monica_hilary, aes(x = year, y = prop)) +
+  geom_line(aes(colour = name))
+```
+
+# Your Turn 3
+```{r}
+five_cool_names <- babynames |> filter((name == "Tanner" & sex == "M") | (name == "Colin" & sex == "M") | (name == "Karsten" & sex == "M") | (name == "Marie" & sex == "F") | (name == "Alex" & sex == "M)"))
+
+ggplot(data = five_cool_names, aes(x = year, y = prop)) +
+  geom_line(aes(colour = name))
+```
+
+# Your Turn 4
+```{r}
+male_names_1945 <- babynames |> filter(year == 1945 & sex == "M")
+male_names_1945 <- male_names_1945 |> arrange(desc(n)) |> slice(1:10)
+
+ggplot(data = male_names_1945, aes(x = name, y = prop)) +
+  geom_col(colour = "black", fill = "navy")
+```
+
+## 3.3
+```{r}
+library(tidyverse)
+slumajors_df <- read_csv("https://raw.githubusercontent.com/highamm/ds234_quarto/main/data_online/SLU_Majors_17_21.csv")
+slumajors_df
+
+slumajors_df |> mutate(ntotal = nfemales + nmales)
+
+slumajors_df |> mutate(percfemale = 100 * nfemales / (nfemales + nmales))
+
+slumajors_df <- slumajors_df |> mutate(ntotal = nfemales + nmales) |> mutate(percfemale = 100* nfemales / (nfemales + nmales))
+
+slumajors_df |> mutate(morewomen = if_else(percfemale > 50, 
+                                           true = "Yes",
+                                           false = "No"))
+
+slumajors_df |> mutate(large_majority =
+                          case_when(percfemale >= 70 ~ "female",
+                                    percfemale <= 30 ~ "male",
+                                    percfemale > 30 & percfemale < 70 ~ "none")) 
+
+slumajors_df <- slumajors_df |>
+  mutate(morewomen = if_else(percfemale > 50,
+                             true = "Yes",
+                             false = "No")) |>
+  mutate(large_majority =
+           case_when(percfemale >= 70 ~ "female",
+                     percfemale <= 30 ~ "male",
+                     percfemale > 30 & percfemale < 70 ~ "none")) 
+```
+
+# Exercises 1-3
+```{r}
+slumajors_df |> mutate(major_size = if_else(ntotal >= 100,
+                                            true = "large",
+                                            false = "small"))
+
+slumajors_df |> mutate(major_size2 = case_when(ntotal >= 150 ~ "large",
+                                               ntotal <= 149 & ntotal >= 41 ~ "medium",
+                                               ntotal <= 40 ~ "small"))
+
+slumajors_df |> mutate(ratio_f2m = nfemales / nmales)
+```
+
+# 3.3.2
+```{r}
+slumajors_df |>
+  summarise(meantotalmajor = mean(ntotal),
+            totalgrad = sum(ntotal))
+
+slumajors_df |> summarise(totalobs = n())
+```
+
+# Exercise 4
+```{r}
+slumajors_df |> summarise(nfemales = sum(nfemales),
+                          nmales = sum(nmales))
+```
+
+# 3.3.3
+```{r}
+babynames |> group_by(year) |>
+  summarise(totalbirths = sum(n))
+
+babynames |> group_by(year) |>
+  summarise(n_name = n())
+```
+
+# Exercise 5-6
+```{r}
+babynames |> group_by(name) |> summarise(sum(n))
+
+babynames |> group_by(name) |> summarise(n())
+```
+
+
+# 3.3.4
+```{r}
+toy_df <- tibble(x = c(NA, 3, 4, 7),
+                 y = c(1, 4, 3, 2),
+                 z = c("A", "A", "B", NA))
+toy_df
+
+toy_df |> summarise(meanx = mean(x, na.rm = TRUE))
+
+toy_df |> mutate(missingx = is.na(x))
+
+toy_df |> filter(is.na(x) != TRUE)
+
+toy_df |> filter(!is.na(x))
+```
+
+# Exercise 7
+```{r}
+toy_df |> filter(!is.na(z))
+```
+
+
+## 3.4 Practice
+
+# Class Exercise 1
+I think that 50% is the right cutoff because the variable is about whether there are more women or men in a major, and that is represented by 50%
+
+# Class Exercise 4 - 5
+```{r}
+babynames |> group_by(year, sex) |> 
+  mutate(rank_var = rank(desc(n))) |>
+  filter(rank_var == 1) |> 
+  ungroup() |>
+  group_by(name) |>
+  summarise(n_appear = n()) |>
+  arrange(desc(n_appear))
+```
+
+# Class Exercise 6
+Grouped by year and sex; slice is slicing the first 5 names for each sex each year.
+```{r}
+babynames_test <- babynames |>
+  group_by(year, sex) |> mutate(ntest = n / prop)
+babynames_test |> slice(1, 2, 3, 4, 5)
+
+babynames_test |> ungroup() |> slice(1, 2, 3, 4, 5)
+```
+
+
+## 3.4.2 Your Turn
+
+# Your Turn 1
+```{r}
+toy_df |> group_by(z) |> mutate(rank_y = mean(y))
+# calculating mean for each level of z
+
+toy_df |> group_by(z) |> slice(1:3)
+# 
+
+toy_df |> group_by(z) |> filter(y >= 2)
+# same as if we did not group_by() z
+# grouping does matter if we use a summary function inside filter()
+
+toy_df |> group_by(z) |> arrange(desc(y))
+# arrange() is not affected by group_by()
+
+toy_df |> group_by(z) |> select(2)
+# select() on a grouped data frame always returns the group variable.
+```
+
+# Your Turn 2
+```{r}
+toy_df |> mutate(x_over_y = x / y)
+# NA for any row with missing x or y
+
+toy_df |> arrange(desc(x))
+# arrange puts the missing value on the bottom. does not matter if arranged by ascending or descending order
+
+toy_df |> filter(x < 5)
+# gets rid of NA's no matter what
+
+toy_df |> summarise(max(x))
+# Returns a missing value if ANY value of x is NA
+
+toy_df |> group_by(z) |> summarise(mean_x = mean(x))
+# mean is missing for any level of the grouping variable z that has a missing x value
+```
+
+# Your Turn 3
+a) mutate() -> This is generally safe because all it is doing is creating a new variable
+b) arrange() -> This is generally safe because all of the data is still there just in a new order
+c) filter() -> This is generally not safe because it will remove some data that does not fit the parameters that we are filtering by. You would have to be sure that you will never need access to the rows that you filter out again.
+d) summarise() -> This is generally not safe because you're changing the structure of the data to be only one row per group and you lose access to the original data
+e) select() -> This is generally not safe because it will remove columns that you do not select. You would have to be sure that you will never need access to the rows that you filter out again.
+
+# Your Turn 4
+```{r}
+slumajors_df |>
+  summarise(meantotalmajor = mean(ntotal),
+            totalgrad = sum(ntotal)) 
+slumajors_df |>
+  mutate(meantotalmajor = mean(ntotal),
+            totalgrad = sum(ntotal)) |>
+  select(meantotalmajor, totalgrad, everything())
+
+## mutate() just adds a new variable; keeps same number of rows and all other variables
+## summarise() collapses data set so that there is 1 row per group
+```
+
+# Your Turn 5
+```{r}
+babynames_n_names <- babynames |> group_by(year) |>
+  summarise(n_names = n())
+## summarise is way more convenient here because it lets us get only 1 row per year
+babynames_n_names
+ggplot(data = babynames_n_names, aes(x = year, y = n_names)) +
+  geom_line()
+```
+
+# Your Turn 6
+```{r}
+babynames_n_s_names <- babynames |> group_by(year, sex) |>
+  summarise(n_s_names = n())
+babynames_n_s_names
+ggplot(data = babynames_n_s_names, aes(x = year, y = n_s_names)) +
+  geom_line(aes(colour = sex))
+```
+
+# Your Turn 7
+```{r}
+babynames_all_time_n_name <- babynames |> group_by(name) |>
+  summarise(all_time_n_name = sum(n))
+babynames_all_time_n_name |> arrange(desc(all_time_n_name))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

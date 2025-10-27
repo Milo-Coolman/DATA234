@@ -1,0 +1,100 @@
+---
+title: "Final Project Slides"
+author: "Milo Coolman"
+format:
+  revealjs:
+    embed-resources: true
+---
+```{r}
+#| echo: FALSE
+#| warning: FALSE
+#| output: FALSE
+
+library(baseballr)
+library(tidyverse)
+batting_stats_2024 <- fg_bat_leaders(startseason = "2024", endseason = "2024", sortstat = "WAR") |> 
+  relocate(WAR) |>
+  filter(PA >= 100)
+batting_stats_2023 <- fg_bat_leaders(startseason = "2023", endseason = "2023", sortstat = "WAR") |> 
+  relocate(WAR) |>
+  filter(PA >= 100)
+batting_stats_2022 <- fg_bat_leaders(startseason = "2022", endseason = "2022", sortstat = "WAR") |> 
+  relocate(WAR) |>
+  filter(PA >= 100)
+batting_stats_2021 <- fg_bat_leaders(startseason = "2021", endseason = "2021", sortstat = "WAR") |> 
+  relocate(WAR) |>
+  filter(PA >= 100)
+
+batting_stats_df <- bind_rows(batting_stats_2021, batting_stats_2022, batting_stats_2023, batting_stats_2024) |>
+  arrange(desc(WAR)) |> select("WAR", "Bats", "Age", "G", "AB", 
+                               "PA", "H", "1B", "2B", "3B", "HR", "R", "RBI", 
+                               "BB", "IBB", "SO", "HBP", "SB", "CS", "AVG", "SF",
+                               "SH", "IFH", "BB_pct", "K_pct", "BB_K", "OBP", 
+                               "SLG", "OPS", "wRC", "Batting", "Fielding", "Defense",
+                               "Offense", "BaseRunning", "Clutch")
+
+exploration_1 <- batting_stats_df |> mutate(WAR_Cat = case_when(
+  WAR >= 6 ~ "WAR Over 6",
+  WAR >= 4 & WAR < 6 ~ "WAR Between 4 & 6",
+  WAR >= 2 & WAR < 4 ~ "WAR Between 2 & 4",
+  WAR >= 0 & WAR < 2 ~ "WAR Between 0 & 2",
+  WAR < 0 ~ "WAR Below 0")) |>
+  relocate(WAR_Cat)
+
+exploration_1.1 <- exploration_1 |> group_by(WAR_Cat) |>
+  summarise(mean_AVG = mean(AVG),
+            mean_HR = mean(HR))
+
+exploration_1.2 <- exploration_1 |> group_by(WAR_Cat) |>
+  summarise(mean_O = mean(Offense),
+            mean_D = mean(Defense))
+```
+
+## Project Goal
+The goal of my project is to better understand the WAR (Wins above Replacement)
+statistic in baseball. I will be doing this by showing some graphs of how
+certain stats relate to WAR, as well as doing a knn analysis to try to determine
+which other stats are the best for predicting WAR.
+
+## Data Background
+To accomplish this, I googled around and found a R package called "baseballr".
+This package scrapes baseball data from different websites that are known for
+their baseball data, and allows me to choose the years that it is scraping this
+data for. The dataset that I am working on looks like this:
+```{r}
+batting_stats_df |> select("WAR", "G", "HR", "AVG", "OBP", "SLG", 
+                           "Offense", "Defense") |> 
+  print(n = 3)
+```
+I have ommitted some columns as there are too many to display, so I selected
+some important ones that I will likely be using for the knn model. WAR is the 
+stat that I am predicting.
+
+
+
+
+## Table or Graph of Results
+```{r}
+ggplot(data = exploration_1, aes(x = AVG, y = HR)) +
+  geom_point() +
+  geom_point(data = exploration_1.1, aes(x = mean_AVG, y = mean_HR), 
+             colour = "red", size = 3) +
+  facet_wrap(~ WAR_Cat) +
+  theme_minimal(base_size = 24) +
+  labs(title = "Comparison of Batting AVG and Home Runs grouped by different WAR",
+       x = "Batting AVG",
+       y = "Home Runs")
+```
+
+
+## Table or Graph of Results
+```{r}
+ggplot(data = exploration_1, aes(x = Offense, y = Defense)) +
+  geom_point() +
+  geom_point(data = exploration_1.2, aes(x = mean_O, y = mean_D),
+             colour = "red", size = 3) +
+  facet_wrap(~ WAR_Cat) +
+  theme_minimal(base_size = 24) +
+  labs(title = "Comparison of Offense & Defense grouped by different WAR")
+```
+

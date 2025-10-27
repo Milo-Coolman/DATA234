@@ -1,0 +1,47 @@
+---
+title: "08-takehomequiz"
+author: "Milo Coolman"
+format: 
+  html:
+    embed-resources: true
+---
+
+All work presented is my own, and I have followed all rules for collaboration. If I used any AI on this assignment, I have clearly stated both (1) what my search prompt was and (2) what I used from the AI answer. 
+- Milo Coolman
+
+# Question 1
+```{r}
+library(tidyverse)
+library(rvest)
+url <- "https://en.wikipedia.org/wiki/Roger_Federer_career_statistics"
+tab <- read_html(url) |> html_nodes("table")
+q1_df <- tab[[5]] |> html_table()
+q1_df
+```
+
+# Question 2
+```{r}
+q2_df <- q1_df |> mutate(slam_name = 
+                  str_extract(Tournament, pattern = 
+                                c("(Wimbledon|US Open|French Open|Australian Open)"))) |>
+  filter(Result == "Win") |>
+  group_by(slam_name) |>
+  summarise(n_wins = n())
+q2_df
+```
+
+# Question 3
+```{r}
+q3_df <- q1_df |> filter(Result == "Win") |> 
+  group_by(Opponent) |> 
+  summarise(n_wins = n()) |>
+  mutate(Opponent = as.factor(Opponent)) |>
+  mutate(Opponent = fct_reorder(Opponent, n_wins))
+q3_df
+
+ggplot(data = q3_df, aes(x = Opponent, y = n_wins)) +
+  geom_point() +
+  geom_segment(aes(xend = Opponent, yend = 0)) +
+  coord_flip() +
+  theme_minimal()
+```

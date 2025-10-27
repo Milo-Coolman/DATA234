@@ -1,0 +1,54 @@
+---
+title: "03-takehomequiz"
+author: "Milo Coolman"
+format: 
+  html:
+    embed-resources: true
+---
+All work presented is my own, and I have followed all rules for collaboration. If I used any AI on this assignment, I have clearly stated both (1) what my search prompt was and (2) what I used from the AI answer.
+- Milo Coolman
+
+# Question 1-2
+```{r}
+#| message: FALSE
+library(tidyverse)
+toy_quiz <- tibble(test_x = c(1, 4, 3, 8),
+                   test_y = c(NA, 6, 3, 10),
+                   test_group = c("A", "A", "B", "C"))
+toy_quiz |> arrange(desc(test_x)) |>
+  mutate(rank_x = rank(desc(test_x)))
+
+toy_quiz |> filter(!is.na(test_y)) |> summarise(mean(test_y))
+toy_quiz |> summarise(mean(test_y, na.rm = TRUE))
+```
+
+# Question 3
+```{r}
+library(ggrepel)
+diamonds_max <- diamonds |> filter(carat == max(carat))
+
+ggplot(data = diamonds, aes(x = cut, y = carat)) +
+  geom_boxplot(fill = "gold") +
+  labs(title = "I forgot we had this quiz due until 11pm Tuesday night",
+       x = "Cut", y = "Carat (weight)") +
+  geom_text_repel(data = diamonds_max, aes(label = price)) +
+  scale_color_viridis_d()
+```
+
+# Question 4
+```{r}
+library(babynames)
+babynames
+babynames_quiz <- babynames |> filter(year >= 2000 & sex == "F") |>
+  group_by(name) |>
+  summarise(n_total = sum(n)) |>
+  arrange(desc(n_total)) |>
+  slice(1:7)
+babynames_quiz
+ggplot(data = babynames_quiz, aes(x = name, y = n_total)) +
+  geom_col()
+```
+
+
+
+

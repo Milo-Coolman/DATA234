@@ -1,0 +1,17 @@
+---
+title: "Course_Evaluation"
+author: "Milo Coolman"
+format:
+  html:
+    embed-resources: true
+---
+
+a) I suppose I 'learned' that when I really put my mind to doing well in a class, I can do it. This realization has been coming on throughout college, however I am hoping this will be my first 4.0 so I think it has finally clicked.
+
+b) This class is all about taking data sets and manipulating them so that you can properly visualize said data.
+
+c) My favorite parts of the class was simply the coding. I am a CS minor, so while I had previous experience coding, this was a fun learning experience, and is getting me to think about pursuing a career in data science.
+
+d) This class was similar to how I thought it would be in that it was coding intensive, however it was different to my expectations as I thought there would be a little bit more statistics involved rather than purely focusing on data visualization.
+
+e) A piece of advice I would have is to read the 'textbook' while doing the exercises before class. It contains every piece of information needed to figure out any problem you encounter in this class. 

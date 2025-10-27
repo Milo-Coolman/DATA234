@@ -1,0 +1,146 @@
+---
+title: "07-project2"
+author: "Milo Coolman"
+format:
+  html:
+    embed-resources: true
+---
+
+All work presented is my own, and I have followed all rules for collaboration. I have not discussed this project with anyone outside of students currently enrolled in this course, and I have listed any such students at the top of my project. If I used and AI on this assignment, I have clearly stated both (1) what my search prompt was and (2) what I used from the AI answer.
+- Milo Coolman
+
+```{r}
+#| echo: false
+#| warning: false
+#| output: false
+library(tidyverse)
+library(readxl)
+library(here)
+
+evals_df <- read_xlsx(here("data/evals_prof_f24.xlsx"),
+                            sheet = 1)
+```
+
+# Question 1
+```{r}
+evals_df
+evals_df_q1 <- evals_df |>
+  mutate(Question_Short = case_when(
+  Question == "1. Course has been a valuable educational experience" ~ "1. Valuable",
+  Question == "2. Effectively Organized" ~ "2. Organized",
+  Question == "3. Environment Conducive to Learning" ~ "3. Conducive",
+  Question == "5a. Fair Assessment of Student work" ~ "5a. Fair",
+  Question == "5b. Timely Assessment of Student Work" ~ "5b. Timely",
+  Question == "5c. Constructive Assessment of Student Work" ~ "5c. Constructive",
+  Question == "6a. Recommend Instructor to another student" ~ "6a. Recommend_Instructor",
+  Question == "6b. Recommend Course to another student" ~ "6b. Recommend_Course",
+  Question == "6c. Instructor was an effective teacher" ~ "6c. Effective")) |>
+  relocate(Question, .after = "Disagree Strongly") |>
+  relocate(Question_Short, .before = "Agree strongly") |>
+  rename(agree_strongly = "Agree strongly",
+         agree = "Agree",
+         agree_somewhat = "Agree Somewhat",
+         neutral = "Neutral",
+         disagree_somewhat = "Disagree Somewhat",
+         disagree = "Disagree",
+         disagree_strongly = "Disagree Strongly") 
+evals_df_q1
+```
+
+# Question 2
+```{r}
+#| warning: false
+evals_df_q2 <- evals_df_q1 |>
+  group_by(Term, Course, Question_Short) |>
+  summarise(n_total = sum(agree_strongly, 
+                           agree, agree_somewhat, 
+                           neutral, disagree_somewhat, 
+                           disagree, disagree_strongly),
+            prop_agree = sum(agree_strongly, agree) / n_total)
+evals_df_q2
+```
+
+# Question 3
+```{r}
+#| warning: false
+evals_df_q3 <- evals_df_q1 |> separate(col = Course, into = c("Course", "Section"), sep = "-") |>
+  mutate(Course = case_when(Course == "4005" ~ "334",
+                            Course == "113" ~ "113",
+                            Course == "213" ~ "213",
+                            Course == "334" ~ "334",
+                            Course == "234" ~ "234")) |>
+  group_by(Course, Question_Short) |>
+  summarise(n_total = sum(agree_strongly, agree, agree_somewhat, neutral,
+                          disagree_somewhat, disagree, disagree_strongly),
+            prop_agree = sum(agree_strongly, agree) / n_total)
+evals_df_q3
+
+ggplot(data = evals_df_q3, aes(x = prop_agree, y = Question_Short)) +
+  geom_point(aes(colour = Course, group = Course)) +
+  scale_colour_viridis_d() +
+  theme_minimal() +
+  labs(title = "Proportion of Students who Agree / Strongly Agree with each question by Course",
+       x = "Proportion of Students who Agree / Strongly Agree",
+       y = "Question")
+
+```
+
+# Question 4
+```{r}
+evals_df_q3 |> summarise(avg_responses = mean(n_total))
+```
+
+# Question 5
+  Overall, 113 has the lowest proportion of students agreeing or strongly agreeing for every single question. After that, the other 3 classes on average have relatively similar proportions of students agreeing for most questions. 213 is next up as generally the worst, with a big discrepancy compared to 234 and 334 when it comes to students wanting to recommend the course to other students, but aside from that, 213, 234, and 334 are fairly close together for every other question.
+ 
+  The questions with the lowest average agreeance are 5a and 5c, regarding whether the instructor grades fairly and whether or not the instructor gives constructive feedback on assignments. The questions with the highest average agreeance are 2 and 5b regarding the organization of the class, and whether or not work is graded and returned in a timely manner. These strengths and weaknesses are consistently both the weakest and strongest across all 4 classes.
+
+# Time Analysis
+  For this question we are looking at data from the student evaluations of Prof. Professorson's 4 classes. Students answered 9 questions, on a scale from Agree Strongly, Agree, Agree Somewhat, Neutral, Disagree Somewhat, Disagree, and Disagree Strongly. We want to determine whether or not Prof. Professorson has been improving his teaching as time goes on, and to do so we are looking at the proportion of students who either Agree or Agree Strongly with the 9 questions.
+  
+```{r}
+#| warning: false
+evals_df_timeanalysis <- evals_df_q1 |> separate(Course, c("Course", "Section"), "-") |>
+  mutate(Course = case_when(Course == "4005" ~ "334",
+                            Course == "113" ~ "113",
+                            Course == "213" ~ "213",
+                            Course == "334" ~ "334",
+                            Course == "234" ~ "234")) |>
+  group_by(Term, Course, Question_Short) |>
+  summarise(n_total = sum(agree_strongly, agree, agree_somewhat, neutral,
+                          disagree_somewhat, disagree, disagree_strongly),
+            prop_agree = sum(agree_strongly, agree) / n_total)
+evals_df_timeanalysis
+
+ggplot(data = evals_df_timeanalysis, aes(x = prop_agree, y = Question_Short)) +
+  geom_point(aes(colour = Course)) +
+  facet_wrap(~ Term) +
+  scale_colour_viridis_d() +
+  theme_minimal() +
+  labs(title = "Proportion of Students who Agree / Strongly Agree with each question by Course & Term",
+       x = "Proportion of Students who Agree / Strongly Agree",
+       y = "Question")
+
+evals_df_113 <- evals_df_timeanalysis |> ungroup() |> filter(Course == "113") |>
+  arrange(Question_Short)
+evals_df_213 <- evals_df_timeanalysis |> ungroup() |> filter(Course == "213") |>
+  arrange(Question_Short)
+evals_df_234 <- evals_df_timeanalysis |> ungroup() |> filter(Course == "234") |>
+  arrange(Question_Short)
+evals_df_334 <- evals_df_timeanalysis |> ungroup() |> filter(Course == "334") |>
+  arrange(Question_Short)
+```
+
+```{r}
+evals_df_113
+evals_df_213
+evals_df_234
+evals_df_334
+```
+
+  For class 113, student's agreeing or strongly agreeing has been on a general trend upwards from the first semester teaching all the way to the most recent semester. It has not increased every single semester, but the general trend is one that is improving. That said, giving constructive feedback seems to be the biggest weakness, as there has not been a single semester in which 90% or more students agreed with this. 
+  For class 213, it is hard to see trends as there are only 3 semesters of data, but one big thing is that students have been increasingly thinking that the grading is unfair. Many students would not want to recommend this course, and as with 113, giving constructive feedback is one of the weakest areas.
+  Class 234 is strange. We still see that constructive feedback is the worst category, however it seems almost as if for many questions there has been a slight backslide in the reviews from students.
+  As with class 213, class 334 has only been taught for 2 semesters, but we continue to see that giving constructive feedback is by far the category that needs more work.
+  
+  All in all, I think it fair to say that Prof. Professorson has been fairly steadily improving as a teacher, having improved in student satisfaction in all questions, however the glaring weakness is that they must improve on giving constructive feedback. A strength that they have is that many students think that his classes are valuable. All in all, Prof. Professorson should be proud of his improvement, and hopefully he is now aware of where he still could use further improvement.

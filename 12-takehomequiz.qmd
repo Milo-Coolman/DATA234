@@ -1,0 +1,61 @@
+---
+title: "12-takehomequiz"
+author: "Milo Coolman"
+format:
+  html:
+    embed-resources: true
+---
+
+All work presented is my own, and I have followed all rules for collaboration. If I used any AI on this assignment, I have clearly stated both (1) what my search prompt was and (2) what I used from the AI answer.
+- Milo Coolman
+
+Resubmitting because I forgot to get the proportion of past answers that ended in s.
+
+# Question 1
+```{r}
+library(tidyverse)
+library(here)
+wordle_df <- read_csv(here("data/wordle.csv"))
+wordle_df
+library(stringr)
+
+wordle_df |> filter(str_detect(wordle_df$word, pattern = "s$"))
+#> 12972 total words; 3958 end in s; proportion is roughly 30.5%
+
+
+real_wordle_df <- wordle_df |> filter(!is.na(day))
+real_wordle_df |> filter(str_detect(real_wordle_df$word, pattern = "s$"))
+#> 2315 total solutions; 36 end in s; proportion is roughly 1.55%
+
+
+
+no_vowel <- real_wordle_df |> mutate(contains_vowel = str_detect(real_wordle_df$word, pattern = "a|e|i|o|u")) |>
+  filter(contains_vowel == FALSE)
+no_vowel
+```
+
+# Question 2
+```{r}
+library(friends)
+library(tidytext)
+friends
+
+friends_unnest <- friends |> unnest_tokens(output = "word", input = "text")
+n_friends <- friends_unnest  |> filter(word == "friend" |
+                            word == "friends" |
+                            word == "Friend" |
+                            word == "Friends") |>
+  group_by(speaker) |>
+  summarise(n = n()) |>
+  arrange(desc(n)) |>
+  slice(1:6) |>
+  mutate(speaker = as.factor(speaker)) |>
+  mutate(speaker = fct_reorder(speaker, n))
+
+ggplot(data = n_friends, aes(x = speaker, y = n)) +
+  geom_point() +
+  geom_segment(aes(xend = speaker, yend = 0)) +
+  coord_flip() +
+  theme_minimal()
+```
+

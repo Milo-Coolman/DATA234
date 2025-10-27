@@ -1,0 +1,32 @@
+---
+title: "09-ethics"
+author: "Milo Coolman"
+format: 
+  html:
+    embed-resources: true
+---
+
+# 9.2
+
+# Class Exercises
+
+### Class Exercise 1
+The purpose of this activity on course evaluations is to show that just because you do not put your name on something does not necessarily mean that it can't be traced back to you if you provide enough other idientifying information.
+
+### Class Exercise 2
+B and D would be the most inappropriate ethially because there is perhaps enough other identifying information that you would be able to determine what another student's grade in the class is.
+A is more hazy ethically as there is not as much identifying information but it is still sharing student grades in the course that have an admittedly low chance of being traced back to a student.
+C seems more appropriate as it doesn't include any 'sensitive' information like grades.
+
+# Your Turns
+
+### Your Turn 1
+In Hypothesis Confirmation, you are often testing one specific predetermined hypothesis of interest. For Hypothesis Generation, you can assess as many questions of interest as you would like and they don't need to be predetermined.
+
+### Your Turn 2
+You can use a single observation as much as youd like to generate a hypothesis. You can only use a single observation once to confirm a hypothesis.
+
+### Your Turn 3
+a) This is more suitable for Hypothesis Confirmation as there is one specific question of interest and there are no other questions of interest.
+b) This is more suitable for Hypothesis Generation because there are no predetermined questions.
+c) This feels more like Hypothesis Generation because while there is a specific question of interest, we are still exploring other seasonal trends.

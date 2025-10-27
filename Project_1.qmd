@@ -1,0 +1,205 @@
+---
+title: "Project_1"
+author: "Milo Coolman"
+format:
+  html:
+    embed-resources: true
+---
+All work presented is my own, and I have followed all rules for collaboration. I have not discussed this project with anyone outside of students currently enrolled in this course, and I have listed any such students at the top of my project. If I used any AI, StackExchange, etc. on this assignment, I have clearly stated both (1) what my search prompt was and (2) what I used from the AI answer.
+- Milo Coolman
+
+```{r}
+#| echo: false
+#| warning: false
+#| output: false
+library(tidyverse)
+library(readxl)
+library(here)
+
+majors_unclean <- read_xlsx(here("data/graduates_2022.xlsx"),
+                            sheet = 1, skip = 1)
+majors_unclean
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| output: false
+majors_only <- majors_unclean |> filter(row_number() %in% 1:90 | `...1` == "GRADUATES") |>
+  filter(!is.na(`...1`)) |>
+  select(-`...2`) |>
+  select(1:74) |>
+  mutate(across(everything(), as.character))
+
+majors_graduates <- majors_only |>
+  pivot_longer(2:ncol(majors_only), names_to = "year", values_to = "majors") |>
+  mutate(year = parse_number(str_trunc(year, 7))) |>
+  rename(major = "...1", 
+         n_majors = majors)
+
+majors_df <- majors_graduates |> filter(major != "GRADUATES")
+graduates_df <- majors_graduates |> filter(major == "GRADUATES") |>
+  select(-major)
+
+slumajors_df <- left_join(majors_df, graduates_df, by = "year") |> 
+  rename(n_majors = n_majors.x,
+         n_graduates = n_majors.y) |>
+  mutate(n_majors = parse_number(n_majors),
+         n_graduates = parse_number(n_graduates)) |>
+  mutate(n_majors = if_else(is.na(n_majors),
+                            true = 0, false = n_majors))
+slumajors_df
+```
+
+# Question 1
+```{r}
+slumajors_cs_stat_math <- slumajors_df |> filter(major == "Mathematics" |
+                                                   major == "Computer Science" |
+                                                   major == "Statistics") |>
+  filter(year >= 2000)
+slumajors_cs_stat_math
+
+ggplot(data = slumajors_df |> filter(year >= 2000), aes(x = year, y = n_majors, group = major)) + 
+  geom_line(show.legend = FALSE, colour = "lightgray") +
+  geom_line(data = slumajors_cs_stat_math, aes(colour = major), linewidth = 2) +
+  theme_minimal() +
+  scale_color_viridis_d() +
+  labs(title = "# of Students in Each Major w/ Emphasis on Math, CS, & Stats",
+       x = "Year",
+       y = "# of Students in each Major")
+```
+
+# Question 2-3
+```{r}
+slumajors_mcss <- slumajors_df |> filter(major == "Mathematics" |
+           major == "Statistics" |
+           major == "Computer Science" |
+           major == "Economics/Math (BA)" |
+           major == "Economics/Math (BS)") |>
+  group_by(year) |>
+  mutate(n_total_mccs = sum(n_majors))
+slumajors_mcss
+
+ggplot(data = slumajors_mcss, aes(x = year, y = n_total_mccs)) +
+  geom_line() +
+  labs(title = "Total # of MCSS Majors Every Year",
+       x = "Year",
+       y = "# of Students Majoring in MCSS Disciplines")
+
+ggplot(data = slumajors_mcss, aes(x = year, y = (n_total_mccs / n_graduates))) +
+  geom_line() +
+  labs(title = "Proportion of MCSS Majors to Total Graduates Every Year",
+       x = "Year",
+       y = "Proportion of Students Majoring in MCSS Disciplines")
+```
+
+# Question 4
+The proportion of total graduates each year being MCCS majors is on the rise. It had an all time low right before 1980, and has been fairly steadily on the rise ever since. If this trend continues, within a few years it is fair to assume that it will reach an all time highest proportion of MCCS majors.
+
+# Question 5
+```{r}
+slumajors_50s <- slumajors_df |> filter(year <= 1959) |> 
+  group_by(major) |>
+  summarise(n_total = sum(n_majors)) |>
+  arrange(desc(n_total)) |> slice(1:5)
+slumajors_50s
+
+ggplot(data = slumajors_50s, aes(x = n_total, y = major)) +
+  geom_col() +
+  labs(title = "Five Most Popular Majors (1950-1959)",
+       x = "# of Students in the Major",
+       y = "Major")
+
+slumajors_last10 <- slumajors_df |> filter(year >= 2013) |> 
+  group_by(major) |>
+  summarise(n_total = sum(n_majors)) |>
+  arrange(desc(n_total)) |> slice(1:5)
+slumajors_last10
+
+ggplot(data = slumajors_last10, aes(x = n_total, y = major)) +
+  geom_col() +
+  labs(title = "Five Most Popular Majors (2013-2022)",
+       x = "# of Students in the Major",
+       y = "Major")
+```
+
+# Question 6
+In the 1950s, the 5 most popular majors at SLU from most popular to least, were Business Administration, Psychology & Sociolocy, English, and Mathematics. In the last 10 years, (2013-2022) the 5 most popular majors from most popular to least were Economics, Business in the Liberal Arts, Psychology, Government, and Biology.
+
+# Question 7
+What caused the fall of stem majors right before 1980, and what caused the number of stem majors to climb again in recent years?
+
+# Question 8
+```{r}
+#| echo: false
+#| output: false
+library(tidyverse)
+## will need to install this package
+library(readxl)
+library(here)
+df <- read_excel(here::here("data/slu_graduates_17_23.xlsx"))
+
+## fixes error in the data
+df <- df |> mutate(across(everything(),
+                          .fns = ~replace(., . ==  "STATS" , "STAT"))) |> mutate(across(everything(),
+                          .fns = ~replace(., . ==  "STATS" , "STAT")))
+
+majors_option1 <- df |> select(-starts_with("minor")) |>
+  pivot_longer(starts_with("major"), names_to = "major_num",
+               values_to = "major") |>
+  filter(!is.na(major)) |>
+  select(-graduation_year)
+
+majors_option1 |> print(n = 20)
+```
+
+Question: Among students who are double or triple majors, what are the 3 most popular majors for both male and female students?
+
+Answer: The three most popular majors among male double/triple majors are Business, Economics, and Government. The same thing for female majors showed that the most popular were Business, Psychology and Economics.
+```{r}
+majors_option2 <- majors_option1 |> pivot_wider(names_from = "major_num", values_from = "major") |> filter(is.na(major2) != TRUE)
+
+majors_option2m <- majors_option2 |> filter(sex == "M")
+majors_option2f <- majors_option2 |> filter(sex == "F")
+
+majors_option2m <- majors_option2m |> pivot_longer(c(major1, major2, major3), 
+                                names_to = "major_num", 
+                                values_to = "major") |> 
+  filter(is.na(major) != TRUE)
+majors_option2f <- majors_option2f |> pivot_longer(c(major1, major2, major3), 
+                                names_to = "major_num", 
+                                values_to = "major") |>
+  filter(is.na(major) != TRUE)
+
+majors_option2m <- majors_option2m |> group_by(major) |> 
+  summarise(n_total = n())
+majors_option2m <- majors_option2m |> arrange(desc(n_total)) |>
+  slice(1:3)
+majors_option2m
+
+majors_option2f <- majors_option2f|> group_by(major) |> 
+  summarise(n_total = n())
+majors_option2f <- majors_option2f |> arrange(desc(n_total)) |>
+  slice(1:3)
+majors_option2f
+
+ggplot(data = majors_option2m, aes(x = major, y = n_total)) +
+  geom_col(aes(colour = major, fill = major)) + 
+  labs(title = "Top 3 Majors Among Male Double & Triple Majors",
+       x = "Major",
+       y = "# of Students in the Major") +
+  scale_colour_viridis_d() +
+  scale_fill_viridis_d() +
+  theme_minimal()
+ggplot(data = majors_option2f, aes(x = major, y = n_total)) +
+  geom_col(aes(colour = major, fill = major)) + 
+  labs(title = "Top 3 Majors Among Female Double & Triple Majors",
+       x = "Major",
+       y = "# of Students in the Major") +
+  scale_colour_viridis_d() +
+  scale_fill_viridis_d() +
+  theme_minimal()
+```
+
+
+

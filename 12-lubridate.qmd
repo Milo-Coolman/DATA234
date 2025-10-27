@@ -1,0 +1,244 @@
+---
+title: "12-lubridate"
+author: "Milo Coolman"
+format: 
+  html:
+    embed-resources: true
+---
+
+# 12.1
+```{r}
+library(tidyverse)
+library(lubridate)
+today()
+now()
+
+library(here)
+holiday_df <- read_csv(here("data/animal_crossing_holidays.csv"))
+holiday_df
+
+holiday_df |> mutate(Date_test = dmy(Date1)) |>
+  select(Date_test, everything())
+
+holiday_df |> mutate(Date_test = mdy(Date2)) |>
+  select(Date_test, everything())
+
+
+ggplot(data = holiday_df, aes(x = Date1, y = Holiday)) +
+  geom_point() + 
+  theme_minimal()
+
+
+holiday_df <- holiday_df |> mutate(Date_test_plot = dmy(Date1)) |>
+  select(Date_test_plot, everything())
+ggplot(data = holiday_df, aes(x = Date_test_plot, y = Holiday)) +
+  geom_point() +
+  theme_minimal()
+```
+
+## 12.1.2
+```{r}
+holiday_df |> mutate(Date_test2 = make_date(year = Year,
+                                             month = Month,
+                                             day = Day)) |>
+  select(Date_test2, everything())
+
+holiday_df |> mutate(Date_test2 = make_date(year = Year,
+                                             month = Month2,
+                                             day = Day)) |>
+  select(Date_test2, everything())
+```
+
+### Exercise 1
+The problem with trying to convert Date4 to a <date> form is that there are 2 different ways that the date is being listed.
+
+### Exercise 2
+```{r}
+holiday_df |> mutate(Date_Ex2 = mdy(Date3)) |>
+  select(Date_Ex2, everything())
+
+holiday_df |> mutate(Date_Ex2 = ymd(Date5)) |>
+  select(Date_Ex2, everything())
+```
+
+# 12.2
+```{r}
+library(quantmod)
+
+start <- ymd("2011-01-01")
+end <- ymd("2021-5-19")
+getSymbols(c("AAPL", "NTDOY", "CMG", "SPY"), src = "yahoo",
+           from = start, to = end)
+
+
+date_tib <- as_tibble(index(AAPL)) |>
+  rename(start_date = value)
+app_tib <- as_tibble(AAPL)
+nint_tib <- as_tibble(NTDOY)
+chip_tib <- as_tibble(CMG)
+spy_tib <- as_tibble(SPY)
+all_stocks <- bind_cols(date_tib, app_tib, nint_tib, chip_tib, spy_tib)
+
+stocks_long <- all_stocks |>
+  select(start_date, AAPL.Adjusted, NTDOY.Adjusted,
+                      CMG.Adjusted, SPY.Adjusted) |>
+  pivot_longer(2:5, names_to = "Stock_Type", values_to = "Price") |>
+  mutate(Stock_Type = fct_recode(Stock_Type,
+                                 Apple = "AAPL.Adjusted",
+                                 Nintendo = "NTDOY.Adjusted",
+                                 Chipotle = "CMG.Adjusted",
+                                 `S & P 500` = "SPY.Adjusted"
+                                 ))
+tail(stocks_long)
+
+stocks_sp <- stocks_long |> filter(Stock_Type == "S & P 500")
+ggplot(data = stocks_sp, aes(x = start_date, y = Price)) +
+  geom_line() +
+  theme_minimal()
+```
+
+## 12.2.1
+```{r}
+stocks_long |> mutate(year_stock = year(start_date))
+stocks_long |> mutate(month_stock = month(start_date))
+stocks_long |> mutate(day_stock = mday(start_date))
+```
+
+## 12.2.2
+```{r}
+test <- mdy("November 4, 2020")
+yday(test)
+
+stocks_long |> mutate(day_in_year = yday(start_date))
+stocks_long |> mutate(day_of_week = wday(start_date))
+stocks_long |> mutate(day_of_week = wday(start_date,
+                                          label = TRUE, abbr = FALSE))
+```
+
+### Exercise 3
+```{r}
+stocks_long |> mutate(month_stock = month(start_date,
+                                          label = TRUE, abbr = FALSE))
+stocks_long |> mutate(month_stock = month(start_date,
+                                          label = TRUE, abbr = TRUE))
+```
+
+# Class Exercises
+
+### Class Exercise 1
+```{r}
+library(tidyverse)
+library(lubridate)
+ds_df <- read_csv(here("data/ds_google.csv"))
+ds_df
+
+ds_df <- ds_df |> mutate(Date = ym(Month))
+```
+
+### Class Exercise 2
+```{r}
+ggplot(data = ds_df, aes(x = Date, y = Data_Science)) +
+  geom_point() +
+  geom_smooth(se = FALSE)
+```
+
+### Class Exercise 3
+```{r}
+start <- ymd("2011-01-01")
+end <- ymd("2024-5-19")
+getSymbols(c("GME"), src = "yahoo",
+           from = start, to = end)
+
+date_tib <- as_tibble(index(GME)) |>
+  rename(start_date = value)
+gme_tib <- as_tibble(GME)
+all_stocks_e3 <- bind_cols(date_tib, gme_tib)
+all_stocks_e3
+ggplot(data = all_stocks_e3, aes(x = start_date, y = GME.Adjusted)) +
+  geom_line()
+```
+
+### Class Exercise 4-6
+```{r}
+all_stocks_e4 <- all_stocks_e3 |> select(start_date, GME.Close) |>
+  mutate(Close_Lag = lag(GME.Close)) |>
+  mutate(HigherDay = if_else(GME.Close > Close_Lag,
+                                 true = 1,
+                                 false = 0)) |>
+  summarise(Prop_Higher_Day = sum(HigherDay, na.rm = TRUE) / 3366)
+
+all_stocks_e5 <- all_stocks_e3 |> select(start_date, GME.Close) |>
+  mutate(DayOfWeek = wday(start_date, label = TRUE)) |>
+  filter(DayOfWeek == "Wed") |>
+  mutate(Close_Lag = lag(GME.Close)) |>
+  mutate(HigherWeek = if_else(GME.Close > Close_Lag,
+                                 true = 1,
+                                 false = 0)) |>
+  summarise(Prop_Higher_Week = sum(HigherWeek, na.rm = TRUE) / 691)
+
+all_stocks_e6 <- all_stocks_e3 |> select(start_date, GME.Close) |>
+  mutate(DayOfMonth = mday(start_date),
+         month = month(start_date),
+         year = year(start_date))  |>
+  group_by(year, month) |> 
+  filter(DayOfMonth == min(DayOfMonth)) |>
+  ungroup() |>
+  mutate(Close_Lag = lag(GME.Close)) |>
+  mutate(HigherMonth = if_else(GME.Close > Close_Lag,
+                                 true = 1,
+                                 false = 0)) |>
+  summarise(Prop_Higher_Month = sum(HigherMonth, na.rm = TRUE) / 161)
+
+all_stocks_e4
+all_stocks_e5
+all_stocks_e6
+```
+
+# Your Turns
+
+### Your Turn 1-2
+```{r}
+library(here)
+pedro_tom_df <- read_csv(here("data/ActorsPopularity.csv"))
+pedro_tom_long <- pedro_tom_df |> slice(2:252) |> separate('Category: All categories', 
+                         c("time", "PedroPascal", "TomHolland"), sep = ",") |>
+  pivot_longer(cols = c(PedroPascal, TomHolland), 
+                                   names_to = "Actor",
+                                   values_to = "Popularity") |>
+  mutate(Popularity = if_else(Popularity == "<1",
+                              true = "0",
+                              false = Popularity)) |>
+  mutate(Popularity = as.double(Popularity),
+         time = ym(time))
+pedro_tom_long
+
+ggplot(data = pedro_tom_long, aes(x = time, y = Popularity)) +
+  geom_line(aes(colour = Actor)) +
+  scale_colour_viridis_d() +
+  theme_minimal()
+```
+
+### Your Turn 3
+```{r}
+pedro_tom_long |> mutate(year = year(time)) |>
+  group_by(year, Actor) |>
+  summarise(mean(Popularity)) |> print(n = 42)
+```
+
+### Your Turn 4-5
+```{r}
+nbapop_df <- read_csv(here("data/NBApop.csv"))
+nbapop_df <- nbapop_df |> slice(2:94) |> separate('Category: All categories', 
+                                     c("time", "popularity"), sep = ",") |>
+  mutate(time = ymd(time),
+         popularity = as.double(popularity))
+nbapop_df
+
+ggplot(data = nbapop_df, aes(x = time, y = popularity)) +
+  geom_line() +
+  geom_smooth(se = FALSE) +
+  theme_bw()
+```
+
+
+

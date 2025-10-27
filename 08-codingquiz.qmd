@@ -1,0 +1,78 @@
+---
+title: "08-codingquiz"
+author: "Milo Coolman"
+format: 
+  html:
+    embed-resources: true
+---
+
+# Question 1
+```{r}
+library(tidyverse)
+path <- "https://raw.githubusercontent.com/highamm/ds234_quarto/main/data_online/"
+statement_df <- read_csv(paste0(path, "statements.csv"))
+
+statement_df_q1 <- statement_df |> mutate(statement = as.factor(statement)) |>
+  mutate(statement1 = fct_recode(statement,
+                                 ProbabilityRules = "1. I found the section of our course on probability rules interesting.",
+                                 DiscreteRandom = "2. I found the section of our course on discrete random variables interesting.",
+                                 ContinuousRandom = "3. I found the section of our course on continuous random variables interesting."))
+
+statement_df_q1 |> group_by(statement1) |>
+  summarise(n_prop = sum(agree, agree_somewhat) / sum(agree, agree_somewhat, neutral, disagree_somewhat, disagree))
+```
+
+# Question 2
+```{r}
+path <- "https://raw.githubusercontent.com/highamm/ds234_quarto/main/data_online/"
+statement_df <- read_csv(paste0(path, "statements.csv"), na = "0",
+                         col_types = cols(
+                           statement = col_factor(),
+                           section = col_factor()))
+statement_df
+```
+
+# Question 3
+```{r}
+library(here)
+standings_df <- read_csv(here("data/standings.csv"))
+standings_df_q3 <- standings_df |> filter(sb_winner == "Won Superbowl") |>
+  mutate(sb_winner = as.factor(sb_winner)) |>
+  group_by(team_name) |>
+  summarise(n_sb_wins = n()) |>
+  mutate(team_name = fct_reorder(team_name, n_sb_wins))
+standings_df_q3
+
+ggplot(data = standings_df_q3, aes(x = team_name, y = n_sb_wins)) +
+  geom_col() +
+  coord_flip() +
+  theme_minimal()
+```
+
+# Question 4
+```{r}
+library(rvest)
+url <- "https://en.wikipedia.org/wiki/Serena_Williams_career_statistics"
+tab <- read_html(url) |> html_nodes("table")
+q4_df <- tab[[18]] |> html_table()
+q4_df
+```
+
+# Question 5
+```{r}
+q5_df <- q4_df |> group_by(Opponent) |>
+  summarise(n_faced = n()) |>
+  arrange(desc(n_faced)) |>
+  slice(1:10) |>
+  mutate(Opponent = fct_reorder(Opponent, n_faced))
+q5_df
+
+ggplot(data = q5_df, aes(x = Opponent, y = n_faced)) +
+  geom_point(size = 3) +
+  geom_segment(aes(xend = Opponent, yend = 0)) +
+  coord_flip() +
+  theme_minimal()
+```
+
+
+

@@ -1,0 +1,60 @@
+---
+title: "11-takehomequiz"
+author: "Milo Coolman"
+format:
+  html:
+    embed-resources: true
+---
+
+All work presented is my own, and I have followed all rules for collaboration. If I used any AI on this assignment, I have clearly stated both (1) what my search prompt was and (2) what I used from the AI answer.
+- Milo Coolman
+
+# Question 1
+```{r}
+library(here)
+library(tidyverse)
+pedro_tom_df <- read_csv(here("data/ActorsPopularity.csv"))
+pedro_tom_long <- pedro_tom_df |> slice(2:252) |> separate('Category: All categories', 
+                         c("time", "PedroPascal", "TomHolland"), sep = ",") |>
+  pivot_longer(cols = c(PedroPascal, TomHolland), 
+                                   names_to = "Actor",
+                                   values_to = "Popularity") |>
+  mutate(Popularity = if_else(Popularity == "<1",
+                              true = "0",
+                              false = Popularity)) |>
+  mutate(Popularity = as.double(Popularity),
+         time = ym(time))
+pedro_tom_long
+
+ggplot(data = pedro_tom_long, aes(x = time, y = Popularity)) +
+  geom_line(aes(colour = Actor)) +
+  scale_colour_viridis_d() +
+  theme_minimal()
+```
+
+```{r}
+RealMadrid_df <- read_csv(here("data/RealMadridgeoMap.csv"))
+RealMadrid_df <- RealMadrid_df |> slice(2:52) |>
+  separate('Category: All categories', c("State", "Popularity"), sep = ",")
+RealMadrid_df
+
+state_names <- as_tibble(state.name)
+state_regions <- as_tibble(state.region)
+state_df <- bind_cols(state_names, state_regions) |>
+  rename(state_name = `value...1`, state_region = `value...2`)
+state_df
+
+RealMadrid_regions <- left_join(RealMadrid_df, state_df, by = join_by(State == state_name))
+
+RealMadrid_regions |> mutate(state_region = if_else(State == "District of Columbia", 
+                                              true = "South",
+                                              false = state_region),
+                             Popularity = if_else(State == "Alaska",
+                                                  true = "0",
+                                                  false = Popularity)) |>
+  group_by(state_region) |>
+  mutate(Popularity = as.double(Popularity)) |>
+  summarise(avg_pop = mean(Popularity))
+```
+
+

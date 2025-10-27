@@ -1,0 +1,37 @@
+---
+title: "09-takehomequiz"
+author: "Milo Coolman"
+format: 
+  html:
+    embed-resources: true
+---
+
+"All work presented is my own, and I have followed all rules for collaboration. If I used any AI on this assignment, I have clearly stated both (1) what my search prompt was and (2) what I used from the AI answer"
+- Milo Coolman
+
+# Question 1
+a) 30 rows because there are 6 rows for each of the 5 squash players in major_df
+b) 28 rows because there are 28 people in major_df who are not in ds234_df
+c) 107 rows we keep all 72 rows of match_df + 35 rows for the 35 non squash players in major_df
+d) 18 rows because there are 3 squash players in ds234_df and they each have 6 rows in match_df
+e) 42 rows because we keep all 27 in df234_df and add 5 rows for each of the 3 squash players.
+
+# Question 2
+```{r}
+library(tidyverse)
+set.seed(514131)
+stat213_df <- tibble(name = c("Kaiya", "Evan", "Tommy", 
+                              "Andrew", "Cam", "Clayton", "Lyla"),
+                     gpa = sample(seq(2, 4, by = 0.25), 7, replace = FALSE))
+
+stat234_df <- tibble(name = c("Evan", "Mitchell", "Nick", 
+                              "Clayton", "Ella", "Haley"),
+                     gpa = sample(seq(2, 4, by = 0.25), 6, replace = FALSE))
+stat213_df
+stat234_df
+
+inner_join(stat213_df, stat234_df, by = join_by(name))
+
+anti_join(stat213_df, stat234_df, by = join_by(name))
+```
+

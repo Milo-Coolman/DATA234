@@ -1,0 +1,123 @@
+---
+title: "14-knn"
+author: "Milo Coolman"
+format: 
+  html:
+    embed-resources: true
+---
+
+# 14.2
+
+```{r}
+set.seed(1119)
+library(tidyverse)
+library(pander)
+library(here) 
+
+pokemon <- read_csv(here("data", "pokemon_full.csv")) |>
+  filter(Type %in% c("Steel", "Dark", "Fire", "Ice")) |>
+  mutate(across(where(is.numeric), ~ (.x - min(.x)) /
+                                 (max(.x) - min(.x)))) 
+## scaling only the numeric predictors
+## you could do this manually, but this code saves a lot of mutate statements
+```
+
+```{r}
+train_sample <- pokemon |>
+  slice_sample(n = 75)
+
+test_sample <- anti_join(pokemon, train_sample)
+```
+
+```{r}
+library(GGally)
+ggpairs(data = train_sample, columns = c(4, 5, 6, 3))
+#> From the side by side box plots, it looks like Defense is definitely a
+#> useful predictor for type (at least 1 boxplot has little to no overlap with
+#> the others). Attack also looks useful too. HP may not improve the model.
+train_sample
+ggpairs(data = train_sample, columns = c(8, 12, 13, 3))
+# testing other possible predictors
+```
+
+```{r}
+library(class)
+
+## create a data frame that only has the predictors
+## that we will use
+train_small <- train_sample |> select(HP, Attack, Defense, Speed)
+test_small <- test_sample |> select(HP, Attack, Defense, Speed)
+
+## put our response variable into a vector
+train_cat <- train_sample$Type
+test_cat <- test_sample$Type
+
+knn_mod <- knn(train = train_small, test = test_small,
+               cl = train_cat, k = 9)
+#> train: dataframe w/ only predictors that we want to use in the model
+#> test: dataframe with only predictors that we want to use in model (from test sample)
+#> cl: vector of the response (Type) from the training sample
+#> k: number of nearest neighbors to use to make classifications
+
+knn_mod
+#> outputs a vector of classifications according to the knn model for the
+#> pokemon in the test sample
+```
+
+# 14.3
+
+```{r}
+#> classification table
+#> predicted classifications are on the rows
+#> actual classifications (what the pokemon actually are) are on the columns
+table(knn_mod, test_cat)
+```
+
+### Exercises 2-4
+
+2)  The KNN model predicted 11 fire type pokemon correctly
+3)  The KNN model predicted 3 fire type pokemon to be dark type
+4)  The KNN model predicted 0 dark type pokemon to be steel type
+
+### Exercise 5
+
+```{r}
+(1 + 11 + 1 + 3) / 45
+#> classification rate: number of correct classifications divided by number of pokemon
+## 35.55555%
+
+tab <- table(knn_mod, test_cat) 
+sum(diag(tab)) / sum(tab)
+```
+
+### Exercise 6
+
+```{r}
+train_small1 <- train_sample |> select(Defense, Attack, weight, SpAtk)
+test_small1 <- test_sample |> select(Defense, Attack, weight, SpAtk)
+
+train_cat1 <- train_sample$Type
+test_cat1 <- test_sample$Type
+
+knn_mod1 <- knn(train = train_small1, test = test_small1, 
+                cl = train_cat1, k = 1)
+
+table(knn_mod1, test_cat1)
+tab <- table(knn_mod1, test_cat1) 
+sum(diag(tab)) / sum(tab)
+```
+
+### Exercise 7
+
+The baseline classification rate is the classification rate that you would get if you just classified every single pokemon in the test samplen to be the most common type in the training sample
+
+```{r}
+# use dplyr to compute base classification rate
+train_sample |> group_by(Type) |> summarise(n())
+# most common type is fire
+test_sample |> mutate(is_fire = if_else(Type == "Fire",
+                                        true = 1, false = 0)) |>
+  relocate(is_fire) |>
+  summarise(prop_fire = mean(is_fire))
+# baseline classification rate = 35.6%
+```

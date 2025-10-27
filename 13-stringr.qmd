@@ -1,0 +1,147 @@
+---
+title: "13-stringr"
+author: "Milo Coolman"
+format:
+  html:
+    embed-resources: true
+---
+
+# 13.1
+```{r}
+library(tidyverse)
+library(here)
+beyonce <- read_csv(here("data/beyonce_lyrics.csv"))
+head(beyonce)
+
+beyonce$line[1:4]
+
+library(tidytext)
+beyonce_unnest <- beyonce |> unnest_tokens(output = "word", input = "line")
+beyonce_unnest
+
+beyonce_unnest <- beyonce_unnest |> mutate(word = str_to_lower(word))
+
+beyonce_unnest |> group_by(word) |>
+  summarise(n = n()) |>
+  arrange(desc(n))
+
+head(stop_words)
+
+beyonce_stop <- anti_join(beyonce_unnest, stop_words, by = join_by(word == word))
+
+beyonce_sum <- beyonce_stop |> group_by(word) |>
+  summarise(n = n()) |>
+  arrange(desc(n)) |>
+  print(n = 25)
+beyonce_sum
+```
+
+### Exercise 1
+```{r}
+missed_stops <- tibble(word = c("uh", "ya", "ooh", "yeah", "gotta"))
+
+beyonce_sum_e1 <- anti_join(beyonce_sum, missed_stops, by = join_by(word == word))
+beyonce_sum_e1
+```
+
+### Exercise 2
+```{r}
+beyonce_sum_e2 <- beyonce_sum_e1 |> slice(1:20) |>
+  mutate(word = as.factor(word)) |>
+  mutate(word = fct_reorder(word, n))
+
+ggplot(data = beyonce_sum_e2, aes(x = word, y = n)) +
+  geom_point() +
+  geom_segment(aes(xend = word, yend = 0)) +
+  coord_flip() +
+  theme_minimal()
+```
+
+### Exercise 3
+```{r}
+library(wordcloud)
+beyonce_small <- beyonce_sum |> filter(n > 50)
+wordcloud(beyonce_small$word, beyonce_small$n, 
+          colors = brewer.pal(8, "Dark2"), scale = c(5, .2),
+          random.order = FALSE, random.color = FALSE)
+```
+
+# 13.2
+```{r}
+library(here)
+library(tidyverse)
+med_djok_df <- read_csv(here("data/med_djok.csv"))
+med_djok_df
+
+```
+
+# Class Exercises
+
+### Class Exercise 1
+```{r}
+library(schrute)
+
+michael_df <- schrute::theoffice |> filter(character == "Michael") |>
+  unnest_tokens(output = "word", input = "text") |> relocate(word) |>
+  group_by(word) |>
+  summarise(n = n()) |>
+  arrange(desc(n))
+michael_stop <- anti_join(michael_df, stop_words, by = join_by(word == word))
+michael_stop |> print(n = 30)
+
+miss_stop <- tibble(word = c("yeah", "hey", "uh", "god", "um", "wow", "lot"))
+
+michael_stop <- anti_join(michael_stop, miss_stop, by = join_by(word == word))
+michael_small <- michael_stop |> slice(1:20) |>
+  mutate(word = fct_reorder(word, n))
+
+ggplot(data = michael_small, aes(x = word, y = n)) +
+  geom_point() +
+  geom_segment(aes(xend = word, yend = 0)) +
+  coord_flip()
+
+library(friends)
+friends::friends
+```
+
+# Your Turns
+
+### Your Turn 1
+```{r}
+med_djok_df |> group_by(Serving) |>
+  mutate(Serve_Location = case_when(str_detect(point, pattern = "^4") ~ "wide",
+                                    str_detect(point, pattern = "^5") ~ "body",
+                                    str_detect(point, pattern = "^6") ~ "center")) |>
+  relocate(Serve_Location) |>
+  group_by(Serving, Serve_Location) |>
+  summarise(n = n()) |>
+  slice(1:3)
+```
+
+### Your Turn 2
+```{r}
+med_djok_df |> group_by(Serving) |>
+  mutate(Serve_Location = case_when(str_detect(point, pattern = "^4") ~ "wide",
+                                    str_detect(point, pattern = "^5") ~ "body",
+                                    str_detect(point, pattern = "^6") ~ "center")) |>
+  relocate(Serve_Location, isSvrWinner) |>
+  group_by(Serve_Location, Serving) |>
+  summarise(n = sum(isSvrWinner)) |>
+  ungroup() |>
+  slice(1:6)
+```
+
+### Your Turn 3
+```{r}
+med_djok_df |> mutate(is_volley = if_else(str_detect(point, pattern = "v") |
+                                            str_detect(point, pattern = "z") | 
+                                            str_detect(point, pattern = "i") | 
+                                            str_detect(point, pattern = "k"), 
+                                          true = 1,
+                                          false = 0)) |>
+  relocate(is_volley) |> 
+  summarise(prop_volley = mean(is_volley))
+``` 
+
+
+

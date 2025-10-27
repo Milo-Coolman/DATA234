@@ -1,0 +1,64 @@
+---
+title: "03-codingquiz"
+author: "Milo Coolman"
+format: 
+  html:
+    fig-height: 2.5
+    embed-resources: true
+---
+```{r}
+#| message: FALSE
+library(tidyverse)
+library(babynames)
+```
+
+# Question 2
+```{r}
+babynames_century <- babynames |> mutate(century = case_when(year < 1900 ~ "1800s",
+                                                             year >= 1900 & year < 2000 ~ "1900s",
+                                                             year >= 2000 ~ "2000s"))
+babynames_century 
+```
+
+# Question 3 - 4
+```{r}
+library(ggrepel)
+library(ggthemes)
+babynames |> filter(name == "Taylor") |> 
+  group_by(sex) |>
+  summarise(n_total = sum(n))
+
+babynames_taylor_max <- babynames |> filter(name == "Taylor") |> 
+  group_by(sex) |>
+  filter(prop == max(prop))
+babynames_taylor_max
+
+ggplot(data = babynames |> filter(name == "Taylor") |> group_by(sex), 
+       aes(x = year, y = prop)) +
+  geom_line(aes(colour = sex)) +
+  geom_text_repel(data = babynames_taylor_max, aes(label = sex)) +
+  scale_colour_viridis_d() +
+  labs(title = "Popularity of the name Taylor for Men and Women",
+       x = "Year",
+       y = "Proportion of Total Births",
+       colour = "Sex") +
+  theme_economist()
+```
+
+# Question 5
+```{r}
+babynames_men_mostpop <- babynames |> filter(sex == "M" & year >= 2000) |>
+  group_by(year) |>
+  slice(1:3) |>
+  group_by(name) |>
+  summarise(top_3 = n()) |> 
+  arrange(desc(top_3))
+babynames_men_mostpop
+
+ggplot(data = babynames_men_mostpop, aes(x = name, y = top_3)) +
+  geom_col()
+```
+
+
+
+

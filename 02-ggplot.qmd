@@ -1,0 +1,271 @@
+---
+title: "Section 2: Intro to Plotting with ggplot"
+author: "Milo Coolman"
+format: 
+  html:
+    embed-resources: true
+---
+
+## Section 2.2: Basic Plot Structure
+
+```{r}
+library(tidyverse)
+stat113_df <- read_csv("https://raw.githubusercontent.com/highamm/ds234_quarto/main/data_online/stat113.csv")
+
+ggplot(data = stat113_df, aes(x = Exercise)) +
+  geom_histogram(colour = "gray1", fill = "gold", bins = 17)
+
+ggplot(data = stat113_df, aes(x = GPA)) +
+  geom_freqpoly(bins = 15)
+
+```
+
+## Exercises 4-6
+```{r}
+ggplot(data = stat113_df, aes(x = Award)) +
+  geom_bar(colour = "gray1", fill = "gold")
+
+
+
+ggplot(data = stat113_df, aes(x = Year, fill = Sex)) +
+  geom_bar(position = "fill") +
+  labs(y = "Proportion")
+```
+
+## Exercises 7-8
+#7 Freshman and Sophomores have a much larger range of weights than Juniors and Seniors, but on Average most people are between 135-170lbs
+```{r}
+ggplot(data = stat113_df, aes(x = Year, y = Wgt)) +
+  geom_violin(colour = "gray1", fill = "gold")
+```
+
+## Exercises 9-11
+#9 There are multiple points that show that you were moving, however the active_cals are listed as 0 which should not be possible.
+#10 It seems as though most of your steps throughout the day are on flat surfaces, and not on exercise machinery such as a stairmaster
+```{r}
+library(tidyverse)
+fitness_full <- read_csv("https://raw.githubusercontent.com/highamm/ds234_quarto/main/data_online/higham_fitness_clean.csv",
+                         col_types = list(stepgoal = col_factor())) |>
+  mutate(weekend_ind = case_when(weekday == "Sat" | weekday == "Sun" ~ "weekend",
+                                 .default = "weekday"))
+
+ggplot(data = fitness_full, aes(x = steps, y = flights)) +
+  geom_point()
+
+ggplot(data = stat113_df, aes(x = Wgt, y = Hgt, colour = Sex)) + 
+  geom_point()
+
+ggplot(data = stat113_df, aes(x = Wgt, y = Hgt, shape = Sex)) +
+  geom_point()
+
+ggplot(data = stat113_df, aes(x = Wgt, y = Hgt, size = Exercise)) +
+  geom_point()
+
+ggplot(data = stat113_df, aes(x = Wgt, y = Hgt)) +
+  geom_point() +
+  facet_wrap(~ Year)
+
+ggplot(data = fitness_full, aes(x = steps, y = active_cals)) +
+  geom_point() +
+  facet_wrap(~ month)
+```
+
+## Section 2.4
+# Class Exercise 1
+```{r}
+stat113_restructured <- stat113_df |> group_by(SocialMedia) |>
+  summarise(n_social = n())
+stat113_restructured
+
+ggplot(data = stat113_restructured, aes(x = SocialMedia, y = n_social)) +
+  geom_col()
+```
+
+# Class Exercise 2
+# method = "lm" makes a best fit line
+# span sets how wiggly line is
+```{r}
+ggplot(data = fitness_full, aes(x = distance, y = active_cals)) +
+  geom_point() + geom_smooth()
+```
+
+# Class Exercise 3
+```{r}
+ggplot(data = fitness_full, aes(x = dayofyear, y = steps)) +
+  geom_line()
+```
+
+# Class Exercise 4
+```{r}
+ggplot(data = stat113_df, aes(x = Exercise, y = GPA)) +
+  geom_point() +
+  facet_wrap(~ Sex + Sport)
+
+ggplot(data = stat113_df, aes(x = Exercise, y = GPA)) +
+  geom_point() +
+  facet_grid(Sex ~ Sport)
+```
+
+# Class Exercise 5
+```{r}
+ggplot(data = stat113_df, aes(x = Award, y = Exercise)) +
+  geom_boxplot(outlier.shape = 8)
+```
+
+# Your Turn 2
+```{r}
+ggplot(data = stat113_df, aes(x = Wgt, y = Pulse)) + 
+  geom_point() +
+  facet_wrap(~ Sport)
+
+ggplot(data = stat113_df, aes(x = Wgt, y = Pulse, colour = Sport)) + 
+  geom_point()
+```
+
+# Your Turn 3
+```{r}
+ggplot(data = stat113_df, aes(x = GPA, y = Exercise)) +
+  geom_point(aes(colour = Year)) +
+  facet_wrap(~ Year)
+
+ggplot(data = stat113_df, aes(x = GPA, y = Exercise, colour = Year)) +
+  geom_point()
+
+## in general, colour is more useful for variables that have fewer levels
+
+```
+
+# Your Turn 4
+```{r}
+ggplot(data = fitness_full, aes(x = distance)) +
+  geom_freqpoly(aes(colour = weekday))
+
+ggplot(data = fitness_full, aes(x = distance)) +
+  geom_histogram() +
+  facet_wrap(~ weekday)
+```
+
+# Your Turn 5
+Line plots are useful if there is one value for the y variable for each distinct value of the x variable. For the stat 113 data there would be more than one exercise value for each unique GPA.
+
+## Section 2.5: Aesthetic Mapping in ggplot
+```{r}
+library(tidyverse)
+fitness_full <- read_csv("https://raw.githubusercontent.com/highamm/ds234_quarto/main/data_online/higham_fitness_clean.csv",
+                         col_types = list(stepgoal = col_factor())) |>
+  mutate(weekend_ind = case_when(weekday == "Sat" | weekday == "Sun" ~ "weekend",
+                                 .default = "weekday"))
+
+ggplot(data = fitness_full,
+       aes(x = Start, y = active_cals, colour = stepgoal)) +
+  geom_point()
+
+ggplot(data = fitness_full,
+       aes(x = Start, y = active_cals, colour = "blue")) +
+  geom_point()
+
+ggplot(data = fitness_full,
+       aes(x = Start, y = active_cals)) +
+  geom_point(colour = "blue")
+```
+
+# Exercise 1
+```{r}
+ggplot(data = fitness_full,
+       aes(x = Start, y = active_cals)) +
+  geom_point(size = 2, shape = 4)
+```
+
+# Exercise 2
+```{r}
+ggplot(data = fitness_full,
+       aes(x = Start, y = active_cals)) +
+  geom_point() +
+  geom_smooth(linewidth = 2)
+```
+
+## 2.5.2
+```{r}
+ggplot(data = fitness_full,
+       aes(x = Start, y = active_cals, colour = stepgoal)) +
+  geom_point() +
+  geom_smooth()
+
+ggplot(data = fitness_full) +
+  geom_point(aes(x = Start, y = active_cals, colour = stepgoal)) +
+  geom_smooth(aes(x = Start, y = active_cals, colour = stepgoal))
+
+
+ggplot(data = fitness_full,
+       aes(x = Start, y = active_cals)) +
+  geom_point(aes(colour = stepgoal)) +
+  geom_smooth()
+
+
+ggplot(data = fitness_full,
+       aes(x = Start, y = active_cals)) +
+  geom_point() +
+  geom_smooth(aes(colour = stepgoal))
+```
+
+# Exercise 3
+```{r}
+ggplot(data = fitness_full) +
+  geom_point(aes(x = Start, y = active_cals)) +
+  geom_line(aes(x = Start, y = active_cals))
+```
+
+# Exercise 4
+```{r}
+ggplot(data =fitness_full, aes(x =weekday,y= steps)) +   
+  geom_boxplot(fill="coral1",colour ="black")
+```
+
+# Exercise 5
+a) Statistical Modelling or Communication
+b) Getting it into a consistent form that makes the rest of the analysis easier
+c) They took into account the strengths and weakness of being human as opposed to optimizing it for computers to do everything
+d) Importing and tidying up the data are the two first steps. These are followed by a cycle that can repeat the three steps of transform, visualize and model as many time as necessary before the information is communicated in some form.
+
+## 2.6
+# Class Exercise 1
+```{r}
+ggplot(data = stat113_df, aes(x = Wgt, y = Hgt, colour = Sport)) +
+  geom_point() +
+  geom_smooth(se = FALSE)
+
+ggplot(data = stat113_df, aes(x = Wgt, y = Hgt)) +
+  geom_point(aes(colour = Sport)) +
+  geom_smooth(se = FALSE)
+```
+
+# Class Exercise 2
+```{r}
+ggplot(data = stat113_df, aes(x = TV)) +
+  geom_histogram(colour = "black", fill = "white")
+```
+
+# Your Turn 1
+a) "lm" is not a variable in the data set so it should not be inside an aes() function
+b) This also works. The local option for colour will override the global specification.
+c) colour = "purple" is not in our dataset so it should not be inside of an aes() function; colour = groupvar should be inside of an aes() function as it is in the data set
+d) colour = groupvar should be in an aes() function because it is a part of our data set
+e) This is the correct way to get the specified plot
+f) colour = "purple" should not be in an aes() function because it is not a variable in the data set
+```{r}
+ggplot(data = stat113_df, aes(x = Wgt, y = Hgt, colour = Sex)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  scale_colour_manual(values = c("purple", "blue"))
+```
+
+# Your Turn 2
+global aesthetics are more useful if they are used by every subsequent GEOM
+```{r}
+ggplot(data = stat113_df) +
+  geom_point(colour = "purple", aes(x = Wgt, y = Hgt)) +
+  geom_smooth(method = "lm", aes(x = Wgt, y = Hgt, colour = Sex))
+```
+  
+  
+  

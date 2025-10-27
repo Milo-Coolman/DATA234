@@ -1,0 +1,44 @@
+---
+title: "Quiz1"
+author: "Milo Coolman"
+format: 
+  html:
+    embed-resources: true
+---
+## Setup Stuff
+```{r}
+library(palmerpenguins)
+library(tidyverse)
+penguins
+```
+
+## Question 1
+```{r}
+ggplot(data = penguins, aes(x = flipper_length_mm)) +
+  geom_histogram(colour = "black", fill = "red", bins = 10)
+```
+
+## Question 2
+```{r}
+ggplot(data = penguins, aes(x = bill_length_mm, y = body_mass_g)) +
+  geom_point(aes(colour = island)) +
+  geom_smooth()
+```
+
+## Question 3a
+```{r}
+ggplot(data = penguins, aes(x = bill_length_mm, y = flipper_length_mm)) +
+  geom_point(aes(colour = species))
+```
+
+## Question 3b
+```{r}
+ggplot(data = penguins, aes(x = bill_length_mm, y = flipper_length_mm)) +
+  geom_point(aes(colour = species)) +
+  facet_wrap(~ species)
+```
+
+
+
+
+

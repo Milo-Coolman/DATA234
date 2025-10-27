@@ -1,0 +1,135 @@
+---
+title: "10-Project3"
+author: "Milo Coolman"
+format: 
+  html:
+    embed-resources: true
+---
+
+# Introduction
+
+```{r}
+#| warning: false
+#| output: false
+library(tidyverse)
+library(here)
+beer_df <- read_csv(here("data/beer_p3.csv"))
+beer_df
+
+set.seed(01112024)
+beer_train <- beer_df |> slice_sample(n = 800)
+beer_test <- anti_join(beer_df, beer_train)
+
+beer_train_scaled <- beer_train |> mutate(across(where(is.numeric), ~ (.x - min(.x)) / (max(.x) - min(.x)))) 
+beer_test_scaled <- beer_test |> mutate(across(where(is.numeric), ~ (.x - min(.x)) / (max(.x) - min(.x))))
+```
+
+This dataset beer_df contains 1206 different beers, along with information about each of them such as the style, its name, alcohol content, and a plethora of information from reviews of each beer. The goal of this project is to take all of that information, and use a knn model to accurately predict the style of a beer based on some of the information given.
+
+# Data Exploration
+
+```{r}
+#| warning: false
+library(GGally)
+ggplot(data = beer_train, aes(x = style, y = ABV)) +
+  geom_boxplot() +
+  labs(title = "ABV for all beers grouped by Style",
+       x = "Style",
+       y = "ABV") +
+  theme_minimal()
+```
+
+This graph shows side-by-side boxplots of the ABV content of each beer in the training set, grouped by each of the 7 different styles of beer. This graph shows us that ABV will likely be a good predictor to use for our knn model, as each style of beer has different ranges for ABV content that do not have too much overlap.
+
+```{r}
+#| warning: false
+beer_train_long <- beer_train |> pivot_longer(cols = c(12:19), 
+                        names_to = "DescriptionOfTaste", 
+                        values_to = "n_description") |>
+  relocate(DescriptionOfTaste, n_description) |>
+  group_by(style, DescriptionOfTaste) |>
+  summarise(n_response = sum(n_description)) |>
+  ungroup() |>
+  group_by(style) |>
+  mutate(n_total = sum(n_response)) |>
+  group_by(style, DescriptionOfTaste) |>
+  mutate(n_prop = (n_response / n_total))
+
+ggplot(data = beer_train_long, aes(x = DescriptionOfTaste, y = n_prop)) +
+  geom_col(aes(colour = DescriptionOfTaste, fill = DescriptionOfTaste)) +
+  facet_wrap(~ style) +
+  labs(title = "Proportion of Responses about Taste of beer grouped by Style",
+       x = "Description of Beer Taste",
+       y = "Proportion of Responses") +
+  coord_flip() +
+  scale_colour_viridis_d() +
+  scale_fill_viridis_d() +
+  theme_minimal()
+```
+
+This graph shows us all of the different responses about the beer's flavor from reviewers again grouped by style of beer. This graph is showing us the proportion of responses for each style, so for example, Stout beers were reviewed as malty almost 40% of the time, meanwhile IPA's were only reviewed as Malty roughly 15% of the time. In this graph, we can see that the proportion of responses reviewing a beer as Malty has some vast changes from style to style, so we can also conclude that Malty will likely be a good predictor to use in our knn model.
+
+```{r}
+#| warning: false
+ggpairs(data = beer_train_scaled, columns = c(6, 10, 12, 1))
+```
+
+Looking at the right-most column on this scatterplot matrix, we can see the variance for the 3 potential predictors, ABV, Body, and Bitter as to their relation with style. All 3 of these predictors have fairly different ranges with minimal overlap as you go from style to style, so it makes sense to reason that they will be good predictors for our knn model.
+
+# Methods
+
+A k-nearest-neighbors model takes a training set and using certain predictor variables gives them a spot on a graph that has however many dimensions that there are predictor variables. Then using a test set of data, for each row in the test set, it places that onto the graph, and then looks at the closest 'neighbors' to the row in the test set. The amount of neighbors that it looks at is determined by the k value. The model then determines what the neighbors are classified as, and predicts the row in the test set to be classified as the one that the majority of the neighbors are classified as. You need a training set and a test set with no overlapping data points because if the data were tested on the same data it was trained on, it would not give you an accurate sense of how good the predictors you chose are. To split the data, you take roughly 2/3 of the data (randomly chosen) and put it into the training set, and the rest goes into the test set. Another important thing is to scale the variables. If the two predictors were height (inches) and weight (lbs), the scale of height would likely be between 60-75 while the scale for weight could be anywhere between 90-300. This would give skewed results for the knn model as it uses distance to determine the nearest neighbors and with differing scales, one of the predictors would be weighted more heavily than the other. In the data set that we are using for this analysis, the columns 'Min IBU' and 'Max IBU' do not make sense to use as predictors for the style of the beer, because these represent the Min and Max IBU that a beer can be in order to be of the proper style.
+
+# Results
+
+```{r}
+library(class)
+beer_train_small <- beer_train_scaled |> select(ABV, Body, Bitter, Fruits, Malty, 
+                                                Astringency, Sweet, Sour, 
+                                                Hoppy, Spices, Alcohol, 
+                                                review_overall, review_taste)
+beer_test_small <- beer_test_scaled |> select(ABV, Body, Bitter, Fruits, Malty, 
+                                              Astringency, Sweet, Sour, 
+                                              Hoppy, Spices, Alcohol, 
+                                              review_overall, review_taste)
+train_cat <- beer_train_scaled$style
+test_cat <- beer_test_scaled$style
+
+# function to determine the best k value for my model
+get_class_rate <- function(k_val) {
+  set.seed(01112024)
+  knn_mod <- knn(train = beer_train_small, test = beer_test_small,
+               cl = train_cat, k = k_val)
+  tab <- table(knn_mod, test_cat) 
+sum(diag(tab)) / sum(tab)
+}
+
+k_vec <- 1:30
+class_rates <- map(k_vec, get_class_rate)
+class_rate_vec <- class_rates |> unlist()
+class_df <- tibble(k_vec, class_rate_vec)
+class_df |> filter(class_rate_vec == max(class_rate_vec))
+```
+
+For my final knn model, I use the following predictors: ABV, Body, Bitter, Fruits, Malty, Astringency, Sweet, Sour, Hoppy, Spices, Alcohol, review_overall, and review_taste. My model achieved a classification rate of 71.2%, while the baseline classification rate (if you simply predicted the style of beer to be the one that was most common in the test set) was 35.7%. Looking at the confusion matrix from my model (shown below), we can explain exactly what it means. We can look at the '116' value that correlates to the row 'Lager' and the column 'Lager'. This means that my knn model predicted 116 beers to be Lagers that were actually Lagers. Moving on to the value '12' with the row 'Lager' and the column 'Brown', this is saying that my model predicted 12 beers to be Lagers that were actually Brown beers.
+
+```{r}
+#| echo: false
+set.seed(01112024)
+  knn_mod <- knn(train = beer_train_small, test = beer_test_small,
+               cl = train_cat, k = 7)
+  tab <- table(knn_mod, test_cat)
+  tab
+```
+
+# Conclusion
+
+All in all I feel like my model was a success. It achieved a classification rate of almost double the baseline classification rate, and I am content ther I found the best possible model. If I had more time to explore this data set, I would want to explore details about each specific brewery, namely the ones with beers of multiple styles to determine a ranking system for the breweries.
+
+```{r}
+obj_Coolman <- list(training = beer_train_small,
+                           cl = train_cat,
+                           k = 7,
+                           student_name = "Milo Coolman")
+save(obj_Coolman, file = "knnvals_MiloCoolman.rda")
+```

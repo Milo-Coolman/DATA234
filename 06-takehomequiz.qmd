@@ -1,0 +1,57 @@
+---
+title: "06-takehomequiz"
+author: "Milo Coolman"
+format: 
+  html:
+    embed-resources: true
+---
+
+All work presented is my own, and I have followed all rules for collaboration. If I used any AI on this assignment, I have clearly stated both (1) what my search prompt was and (2) what I used from the AI answer.
+- Milo Coolman
+
+```{r}
+library(tidyverse)
+library(here)
+attendance_full <- read_csv(here("data/attendance_113.csv"))
+attendance_full
+```
+
+# Question 1
+```{r}
+attendance_q1 <- attendance_full |> group_by(section) |> 
+  pivot_longer(cols = c(3:40), names_to = "class", values_to = "attendance") |>
+  mutate(attendance_chr = case_when(attendance == "x" ~ "1",
+                                     attendance = is.na(attendance) ~ "0")) |>
+  mutate(attendance_dbl = as.double(attendance_chr)) |>
+  ungroup() |>
+  group_by(section, class) |>
+  summarise(mean_attendance = sum(attendance_dbl))
+
+attendance_q1.2 <- attendance_q1 |> ungroup() |> group_by(section) |>
+  summarise(mean_section = mean(mean_attendance))
+
+ggplot(data = attendance_q1, aes(x = section, y = mean_attendance)) +
+  geom_point()
+  geom_point(data = attendance_q1.2, aes(x = section, y = mean_section),
+             colour = "purple", shape = 8) +
+  scale_x_continuous(breaks = c(810, 920)) +
+```
+
+# Question 2
+I do not believe that there is evidence that the number of absences was substantially different for the two sections as the mean absences was roughly 2.5 for both.
+
+# Question 3
+```{r}
+attendance_full |> group_by(section) |> 
+  pivot_longer(cols = c(3:40), names_to = "class", values_to = "attendance") |>
+  mutate(attendance_chr = case_when(attendance == "x" ~ "1",
+                                     attendance = is.na(attendance) ~ "0")) |>
+  mutate(attendance_dbl = as.double(attendance_chr)) |>
+  ungroup() |>
+  group_by(section, class) |>
+  summarise(mean_attendance = sum(attendance_dbl)) |>
+  filter(mean_attendance == max(mean_attendance))
+```
+The Friday on Week 12 is the first day of Thanksgiving, so I would guess that many people especially those with long travels back home would have been willing to skip that class so as to get home faster.
+
+

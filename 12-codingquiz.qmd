@@ -1,0 +1,78 @@
+---
+title: "12-codingquiz"
+author: "Milo Coolman"
+format:
+  html:
+    embed-resources: true
+---
+
+# Question 1
+```{r}
+library(tidyverse)
+library(schrute)
+library(tidytext)
+theoffice_unnested <- theoffice |>
+  unnest_tokens(output = "spoken_words", input = "text")
+theoffice_nostop <- anti_join(theoffice_unnested, stop_words,
+                              join_by(spoken_words == word))
+n_words <- theoffice_nostop |> relocate(spoken_words) |>
+  group_by(character) |>
+  summarise(n = n()) |> 
+  arrange(desc(n)) |>
+  slice(1:5)
+
+n_words
+```
+
+# Question 2
+```{r}
+library(friends)
+friends_6 <- friends |> 
+  filter(speaker %in% c("Chandler Bing", "Phoebe Buffay", "Monica Geller",
+                        "Ross Geller", "Rachel Green", "Joey Tribbiani"))
+
+friends_6_q2 <- friends_6 |> filter(str_detect(friends_6$text, pattern = "Joey")) |>
+  group_by(speaker) |>
+  summarise(n = n()) |>
+  mutate(speaker = as.factor(speaker)) |>
+  mutate(speaker = fct_reorder(speaker, n))
+friends_6_q2
+
+ggplot(data = friends_6_q2, aes(x = speaker, y = n)) +
+  geom_col(aes(colour = speaker, fill = speaker)) +
+  theme_minimal()
+```
+
+# Question 3
+a)
+class_df |> filter(yvar > 2 | xvar > 2) |>
+  mutate(diffvar = yvar - xvar)
+
+b)
+class_df |> group_by(year) |>
+  summarise(max_z = max(z)) |>
+  arrange(desc(max_z))
+
+c)
+class_df |> filter(zvar = a_value) |>
+  group_by(year) |>
+  summarise("xxxxx" = n())
+
+# Question 4
+```{r}
+library(tidyverse)
+diamonds
+
+diamonds <- diamonds |> mutate(price_per_carat = price / carat)
+ggplot(data = diamonds, aes(x = clarity, y = price_per_carat)) +
+  geom_boxplot() +
+  facet_wrap(~ cut)
+
+
+prop_large_diamonds <- diamonds |> mutate(big_carat = case_when(carat > 1 ~ TRUE,
+                                         carat <= 1 ~ FALSE)) |>
+  group_by(color) |>
+  summarise(prop_big = mean(big_carat))
+prop_large_diamonds
+```
+

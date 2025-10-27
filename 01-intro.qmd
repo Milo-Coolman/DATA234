@@ -1,0 +1,53 @@
+---
+title: "Untitled"
+format: html
+---
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
+
+## Running Code
+
+When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+library(tidyverse)
+
+pres_df <- read_csv("https://raw.githubusercontent.com/highamm/ds234_quarto/main/data_online/pres2000.csv") 
+head(pres_df)
+
+ggplot(data = pres_df, aes(x = Bush)) +
+  geom_histogram(colour = "black", fill = "darkred", bins = 15) +
+  labs(x = "Votes for Bush in Florida")
+
+ggplot(data = pres_df, aes(x = Buchanan, y = Bush)) +
+  geom_point()
+```
+
+
+## Section 1.9: Your Turn
+a) Milo Coolman; Senior
+b) Majoring in Mathematics & Minoring in CS
+c) I am taking this course because it seems like a class that will be quite useful after college
+d) I took STAT 113 in Spring 2022 with Ramler
+e) I have not taken Stat 213 but I have taken CS 140
+f) Dobbs Ferry, NY, USA
+g) I am on the club soccer team
+h) My favorite TV show is Game of Thrones
+i) I have 3 fake teeth and will soon have a 4th
+j) I am excited to learn how to visualize data on my own
+k) I hope to broaden my understanding of statistics and be able to easily display data
+l) I am going to listen to what George said in class and make sure that I have fun as this is one of the more fun data science/stats classes.
+
+
+
+
+You can add options to executable code like this 
+
+```{r}
+#| echo: false
+2 * 2
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).

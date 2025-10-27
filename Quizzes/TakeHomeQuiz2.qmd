@@ -1,0 +1,79 @@
+---
+title: "TakeHomeQuiz2"
+author: "Milo Coolman"
+format:
+  html:
+    embed-resources: true
+---
+All work presented is my own, and I have followed all rules for collaboration. If I used any AI on this assignment, I have clearly stated both (1) what my search prompt was and (2) what I used from the AI answer.
+- Milo Coolman
+
+
+```{r}
+library(tidyverse)
+stat_113_df <- read_csv("https://raw.githubusercontent.com/highamm/ds234_quarto/main/data_online/stat113.csv") |>
+  filter(Sex != "Choose") |>
+  filter(GPA <= 4.0)
+```
+
+# Question 1
+```{r}
+ggplot(data = stat_113_df, aes(x = Exercise, y = Pulse)) +
+  geom_point(aes(colour = Sex)) +
+  geom_smooth()
+```
+
+# Question 2
+```{r}
+ggplot(data = stat_113_df, aes(x = Exercise, y = Pulse)) +
+  geom_point() +
+  facet_wrap(~ Sex)
+```
+
+# Question 3
+```{r}
+stat_113_df <- stat_113_df |> mutate(BMI = ((703 * Wgt) / (Hgt^2)))
+stat_113_df
+```
+
+# Question 4
+```{r}
+stat_113_df <- stat_113_df |> mutate(Status = case_when(BMI <= 18.4 ~ "underweight",
+                                         BMI > 18.4 & BMI <= 24.9 ~ "normal",
+                                         BMI >= 25 & BMI <= 49.9 ~ "overweight",
+                                         BMI >= 50 ~ "obese"))
+stat_113_df
+```
+
+# Question 5
+```{r}
+stat_113_df |> slice(1:100)
+
+stat_113_df |> filter(Year == "FirstYear")
+
+stat_113_df |> filter(Sport == "Yes" & Award == "Olympic")
+
+stat_113_df |> filter(Pulse > 75 | Exercise > 10)
+```
+
+# Question 6
+```{r}
+stat_113_df_nomiss <- stat_113_df |> filter(!is.na(Sex) & !is.na(Sport))
+
+stat_113_df_nomiss |> filter(!is.na(Pulse)) |> 
+                      group_by(Sport, Sex) |>
+                      summarise(mean_pulse = mean(Pulse))
+```
+
+# Question 7
+a) 6 rows
+b) 200 rows
+c) 12 rows
+
+
+
+
+
+
+
+

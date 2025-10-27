@@ -1,0 +1,216 @@
+---
+title: "11-merging_w_dplyr"
+author: "Milo Coolman"
+format: 
+  html:
+    embed-resources: true
+---
+
+# 11.1
+
+### 11.1.1
+```{r}
+library(tidyverse)
+library(here)
+atp_2019 <- read_csv(here("data/atp_matches_2019.csv"))
+atp_2018 <- read_csv(here("data/atp_matches_2018.csv"))
+head(atp_2019) 
+head(atp_2018)
+
+atp_df <- bind_rows(atp_2018, atp_2019)
+#> Error in `bind_rows()`:
+#> ! Can't combine `..1$winner_seed` <double> and `..2$winner_seed` <character>.
+
+atp_2018 <- read_csv(here("data/atp_matches_2018.csv"),
+                     col_types = cols(winner_seed = col_character(),
+                                      loser_seed = col_character()))
+atp_df <- bind_rows(atp_2018, atp_2019)
+atp_df
+
+
+df_test2a <- tibble(xvar = c(1, 2))
+df_test2b <- tibble(xvar = c(1, 2), y = c(5, 1))
+bind_rows(df_test2a, df_test2b)
+```
+
+### 11.1.2
+```{r}
+df_test1a <- tibble(xvar = c(1, 2), yvar = c(5, 1))
+df_test1b <- tibble(x = c(1, 2), y = c(5, 1))
+bind_cols(df_test1a, df_test1b)
+```
+
+### Exercise 1
+```{r}
+df_test1a <- tibble(xvar = c(1, 2), yvar = c(5, 1))
+df_test1b <- tibble(x = c(1, 2), y = c(5, 1))
+bind_rows(df_test1a, df_test1b)
+## The col names for test1a are 'xvar' and 'yvar', wheras in 1b, it is 'x' and 'y'
+df_test1a <- df_test1a |> rename(x = xvar, y = yvar)
+bind_rows(df_test1a, df_test1b)
+```
+
+# 11.2
+```{r}
+library(tidyverse)
+df1 <- tibble(name = c("Emily", "Miguel", "Tonya"), fav_sport = c("Swimming", "Football", "Tennis"))
+df2 <- tibble(name = c("Tonya", "Miguel", "Emily"),
+              fav_colour = c("Robin's Egg Blue", "Tickle Me Pink", "Goldenrod"))
+## Key is 'name'
+
+library(babynames)
+life_df <- babynames::lifetables
+birth_df <- babynames::births
+babynames_df <- babynames::babynames
+
+head(babynames)
+head(births)
+head(lifetables)
+
+combined_left <- left_join(babynames_df, birth_df, by = join_by(year == year))
+head(combined_left)
+tail(combined_left)
+# We do not have births data for the 1800s which are the years in which the head of the dataset is
+
+## these will always do the same exact thing
+right_join(babynames_df, birth_df, by = join_by(year == year))
+left_join(birth_df, babynames_df, by = join_by(year == year))
+
+full_join(babynames_df, birth_df, by = join_by(year == year))
+
+inner_join(babynames_df, birth_df, by = join_by(year == year))
+```
+
+### Exercise 2
+```{r}
+left_join(babynames_df, birth_df, by = join_by(year == year))
+
+left_join(birth_df, babynames_df, by = join_by(year == year))
+#> The first join has more rows because babynames_df starts in 1880
+#> while birth_df starts in 1909. Left join keeps all the data from the first 
+#> dataset.
+```
+
+# 11.3
+```{r}
+atp_2019 <- read_csv(here("data/atp_matches_2019.csv"))
+atp_2018 <- read_csv(here("data/atp_matches_2018.csv"))
+atp_2019
+atp_2018
+
+win10 <- atp_2018 |> group_by(winner_name) |>
+  summarise(nwin = n()) |> 
+  filter(nwin >= 10)
+win10
+
+tennis_2019_10 <- semi_join(atp_2019, win10,
+                            by = join_by(winner_name == winner_name))
+tennis_2019_10$winner_name
+
+new_winners <- anti_join(atp_2019, atp_2018,
+                         by = join_by(winner_name == winner_name)) 
+new_winners$winner_name
+
+new_winners |> group_by(winner_name) |>
+  summarise(nwin = n()) |>
+  arrange(desc(nwin))
+```
+
+# Class Exercises
+
+### Class Exercise 0
+a) 5
+b) 6
+c) 8
+d) 3
+e) 3
+f) 2
+
+### Class Exercise 1
+We must assume that each of the two data frames have observations in the exact same order.
+If df1 had Dodgers, Yankees, Guardians as the first 3 rows but df2 had Yankees, Guardians, Dodgers then we wouldn't be able to use bind_cols().
+
+### Class Exercise 2
+```{r}
+slumajors_df <- read_csv(here("data/SLU_Majors_17_21.csv"))
+collegemajors_df <- read_csv(here("data/college-majors.csv"))
+head(slumajors_df)
+head(collegemajors_df)
+#> Makes most sense to use 'Major' as key but first of all in collegemajors, 
+#> that column is in all caps, but more importantly, 
+#> the names of the majors do not match up exactly between data sets.
+```
+
+### Class Exercise 3
+```{r}
+library(tidyverse)
+mortality_df <- read_csv(here("data/gun_violence_us.csv"))
+dc_df <- tibble(state = "DC", mortality_rate = 16.7,
+                ownership_rate = 0.087, region = "NE")
+
+all_df <- bind_rows(mortality_df, dc_df)
+```
+
+### Class Exercise 4
+```{r}
+df1 <- as_tibble(state.x77)
+df2 <- as_tibble(state.abb)
+df1
+df2
+
+states_df <- bind_cols(df2, df1)
+#> we are assuming that the data in df1 is in the same order as the states in df2
+```
+
+### Class Exercise 5
+```{r}
+left_join(all_df, states_df, join_by(state == value))
+```
+
+### Class Exercise 6
+```{r}
+left_join(states_df, all_df, join_by(value == state))
+```
+
+### Class Exercise 7
+```{r}
+all_df_ne <- all_df |> filter(region == "NE")
+semi_join(all_df_ne, states_df, join_by(state == value))
+```
+
+### Class Exercise 8
+```{r}
+all_df_nne <- all_df |> filter(region != "NE")
+anti_join(states_df, all_df_nne, join_by(value == state))
+```
+
+
+
+# Your Turns
+
+### Your Turn 1
+a) True
+b) True
+c) False
+
+### Your Turn 2
+a) 6
+b) 8
+c) 10
+d) 4
+e) 4
+f) 2
+
+### Your Turn 3
+a) Inconsistent units for ownership rate. The one for DC is as a percent '8.7', but in mortality df the units are in decimal form so 8.7% would be written as 0.087.
+b) Need quotes around NE because region is either a character or a factor
+c) Ownership is a character class for the test3 because it is in quotes when he should remain out of quotes so that it would be a double. 
+
+
+### Your Turn 4
+a) 300
+b) 5
+c) 285
+d) 15
+e) 310
+

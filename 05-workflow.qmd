@@ -1,0 +1,170 @@
+---
+title: "05-workflow"
+author: "Milo Coolman"
+format:
+  html:
+    embed-resources: true
+---
+
+```{r}
+library(tidyverse)
+library(here)
+here()
+
+athletes_df <- read_csv(here("data/athletesdata.csv"))
+```
+
+### Exercise 2
+```{r}
+cars_3t <- mtcars |> filter(wt > 3)
+
+athletes_df_disp <- mtcars |> group_by(am) |>
+  summarise(mean_disp = mean(disp),
+            med_disp = median(disp),
+            sd_disp = sd(disp))
+```
+
+# 5.3
+```{r}
+ggplot(data=mtcars,aes(x=wt,y=drat)) +
+  geom_point() +
+  geom_smooth(method="lm",se=FALSE)
+```
+
+### Exercise 3
+```{r}
+ggplot(data=mtcars,aes(x = mpg)) +
+  geom_histogram(colour="black",fill="white",bins=15) + 
+  facet_wrap(~cyl, ncol=1)
+```
+
+# 5.5
+```{r}
+majors_df <- read_csv(here("data/majors.csv")) |>
+  pivot_longer(-1, names_to = "year", values_to = "n_majors") |>
+  mutate(year = as.numeric(year)) |>
+  rename(major = `...1`)
+head(majors_df)
+
+spanish_df <- majors_df |> filter(major == "Estudios Hispanicos (Spanish)")
+ggplot(data = spanish_df, aes(x = year, y = n_majors)) +
+  geom_line() +
+  geom_smooth(se = FALSE)
+
+int_econ_df <- majors_df |> filter(major == "Int'l Economics (Combined)")
+ggplot(data = int_econ_df, aes(x = year, y = n_majors)) +
+  geom_line() +
+  geom_smooth(se = FALSE)
+
+library(skimr)
+library(here)
+videogame_df <- read_csv(here("data/videogame_clean.csv"))
+skim(videogame_df)
+
+videogame_df |> summarise(mean_meta = mean(metascore, na.rm = TRUE),
+                          med_meta = median(metascore, na.rm = TRUE))
+
+ggplot(data = videogame_df, aes(x = metascore, y = median_playtime)) +
+  geom_point() +
+  geom_smooth()
+```
+
+### Exercise 4
+Categorical: 2
+Numerical: 0
+```{r}
+stat113_df <- read_csv(here("data/stat113.csv"))
+skim(stat113_df)
+```
+
+# 5.6
+```{r}
+test_df <- read_csv(here("data/parsedf.csv"))
+head(test_df)
+## How do I get rid of the units from the values in
+## my variable `xvar`? Thanks!
+library(tidyverse)
+test_df2 <- tibble(xvar = c("20,000 dollars", "40 dollars"),
+                   yvar = c(1, 2))
+test_df2
+```
+
+```{r}
+## is there a way to get a summary measure, like the mean, for 
+## all numeric variables in a data set without writing a separate
+## summarise() statement for each variable?
+
+library(tidyverse)
+sum_df <- tibble(xvar = c("A", "B"), yvar = c(1, 4), zvar = c(-1, 4),
+                 svar = c("G", "g"), tvar = c(99, 100000))
+```
+
+### Exercise 5
+```{r}
+milo_classes <- tibble(classes = c("Data Science", "Real Analysis", "Geology",
+                                   "Combinatorial Game Theory"), 
+                       time = c(5, 15, 3, 10))
+milo_classes
+```
+
+# Class Exercises
+
+### Class Exercise 1
+This is not a reproducible workflow. Loading packages with point and click operations means that someone else would not be able to explicitly see all of the code needed to complete your analysis.
+
+### Class Exercise 2
+The error is in the facet_wrap(cyl) -> it should say facet_wrap(~ cyl)
+```{r}
+ggplot(data = mtcars, aes(x = hp, y = drat)) +
+  geom_point(aes(colour = factor(gear))) +
+  facet_wrap(~ cyl) +
+  geom_smooth()
+```
+
+### Class Exercise 3
+After summarising, the variable 'flipper_ratio' no longer exists in this data set, so it is impossible to arrange by it. Change it to 'mean_flipper'
+```{r}
+penguins |> mutate(flipper_ratio = flipper_length_mm / body_mass_g) |>
+  group_by(species, island) |>
+  summarise(mean_flipper = mean(flipper_ratio, na.rm = TRUE)) |>
+  arrange(flipper_ratio) |>
+  pivot_wider(names_from = c("species"), values_from = "mean_flipper")
+```
+
+### Class Exercise 4
+Median was not affected because the median was 0 for both, but the mean was fairly drastically reduced from 5.16hrs to 3.34hrs
+```{r}
+videogame_df |> summarise(mean_pt = mean(median_playtime, na.rm = TRUE),
+                          median_pt = median(median_playtime, na.rm = TRUE))
+videogame_df |> filter(median_playtime <= 1000) |> 
+  summarise(mean_pt = mean(median_playtime),
+                              median_pt = median(median_playtime))
+```
+
+### Class Exercise 5
+```{r}
+library(tidyverse)
+evals_df <- read_csv(here("data/evals_prof_S21.csv"))
+head(evals_df)
+
+toy_df <- tibble(Term = c("F19", "S19", "F20", "F21", "F22"))
+toy_df
+## how to I separate this term variable so that there is a new column 
+## for semester and a new column for year?
+```
+
+### Your Turn 4
+```{r}
+## reprex where the answer would be to use filter
+tibble(x1 = c(10, NA, 14, 9),
+       x2 = c(3, 8, NA, 12))
+## question: how do you remove the rows with missing values
+```
+
+
+
+
+
+
+
+
